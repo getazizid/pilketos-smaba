@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
-import { KeyRound, User, AlertCircle, CheckCircle2, Sparkles, ShieldCheck } from 'lucide-react';
+import { KeyRound, User, AlertCircle, CheckCircle2, ShieldCheck, Lock, ArrowRight } from 'lucide-react';
 import { formatIndonesianDate } from '../../utils/helpers';
 
 export function VoterLogin({ onLoginSuccess }) {
@@ -102,23 +102,23 @@ export function VoterLogin({ onLoginSuccess }) {
         {/* Notifikasi Error */}
         {errorMsg && (
           <div style={{
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.35)',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
             borderRadius: 'var(--radius-md)',
             padding: '1rem 1.25rem',
             marginBottom: '1.5rem',
             display: 'flex',
             alignItems: 'flex-start',
             gap: '0.75rem',
-            color: '#fca5a5',
+            color: '#b91c1c',
             fontSize: '0.9rem'
           }}>
-            <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+            <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px', color: '#dc2626' }} />
             <div>
-              <div style={{ fontWeight: '600', marginBottom: '0.2rem' }}>Perhatian:</div>
+              <div style={{ fontWeight: '700', marginBottom: '0.2rem' }}>Perhatian:</div>
               <div>{errorMsg}</div>
               {votedInfo && votedInfo.votedAt && (
-                <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: '#f87171' }}>
+                <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: '#dc2626', fontWeight: '600' }}>
                   Waktu Memilih: {formatIndonesianDate(votedInfo.votedAt)}
                 </div>
               )}
@@ -185,11 +185,11 @@ export function VoterLogin({ onLoginSuccess }) {
 
           <button
             type="submit"
-            className="btn btn-gold btn-lg"
-            style={{ width: '100%', marginTop: '1rem' }}
+            className="btn btn-primary btn-lg"
+            style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
           >
-            <Sparkles size={20} />
             <span>Masuk ke Bilik Suara</span>
+            <ArrowRight size={18} />
           </button>
         </form>
 
@@ -198,11 +198,11 @@ export function VoterLogin({ onLoginSuccess }) {
           <div style={{ 
             marginTop: '2rem', 
             paddingTop: '1.5rem', 
-            borderTop: '1px dashed var(--border-glass)',
+            borderTop: '1px dashed #cbd5e1',
             textAlign: 'center'
           }}>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-              ⚡ Cepat Uji Coba (Akun Siswa Demo Belum Memilih):
+              Akun Siswa Uji Coba (Belum Memilih):
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
               {sampleAvailable.map((s) => (
@@ -226,15 +226,25 @@ export function VoterLogin({ onLoginSuccess }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          flexWrap: 'wrap',
           gap: '1rem',
-          fontSize: '0.78rem',
+          fontSize: '0.8rem',
           color: 'var(--text-muted)'
         }}>
-          <span>🛡️ Enkripsi Token Aman</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Lock size={13} color="var(--primary)" />
+            <span>Enkripsi Token Aman</span>
+          </span>
           <span>&bull;</span>
-          <span>🗳️ 1 Siswa 1 Suara</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <CheckCircle2 size={13} color="var(--primary)" />
+            <span>1 Siswa 1 Suara</span>
+          </span>
           <span>&bull;</span>
-          <span>🔒 Asas Rahasia Terjamin</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <ShieldCheck size={13} color="var(--primary)" />
+            <span>Asas Rahasia Terjamin</span>
+          </span>
         </div>
       </div>
     </div>

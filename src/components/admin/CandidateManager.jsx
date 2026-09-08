@@ -21,10 +21,7 @@ export function CandidateManager({ onAddToast }) {
     chairmanClass: '',
     viceChairmanClass: '',
     photoUrl: '',
-    tagline: '',
-    vision: '',
-    missions: '',
-    workPrograms: ''
+    tagline: ''
   });
 
   const openAddModal = () => {
@@ -36,10 +33,7 @@ export function CandidateManager({ onAddToast }) {
       chairmanClass: 'XI-1',
       viceChairmanClass: 'X-1',
       photoUrl: '/assets/paslon1.jpg',
-      tagline: '',
-      vision: '',
-      missions: 'Meningkatkan prestasi siswa\nMempererat persaudaraan antar ekskul\nMewujudkan lingkungan sekolah bersih',
-      workPrograms: 'Festival Seni Budaya SMABA\nKotak Aspirasi Digital'
+      tagline: ''
     });
     setIsModalOpen(true);
   };
@@ -53,10 +47,7 @@ export function CandidateManager({ onAddToast }) {
       chairmanClass: c.chairmanClass,
       viceChairmanClass: c.viceChairmanClass,
       photoUrl: c.photoUrl,
-      tagline: c.tagline || '',
-      vision: c.vision || '',
-      missions: Array.isArray(c.missions) ? c.missions.join('\n') : (c.missions || ''),
-      workPrograms: Array.isArray(c.workPrograms) ? c.workPrograms.join('\n') : (c.workPrograms || '')
+      tagline: c.tagline || ''
     });
     setIsModalOpen(true);
   };
@@ -65,16 +56,6 @@ export function CandidateManager({ onAddToast }) {
     e.preventDefault();
     if (isReadOnly) return;
 
-    const missionsArray = formData.missions
-      .split('\n')
-      .map(m => m.trim())
-      .filter(m => m.length > 0);
-
-    const programsArray = formData.workPrograms
-      .split('\n')
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
-
     const payload = {
       number: Number(formData.number),
       chairmanName: formData.chairmanName.trim(),
@@ -82,10 +63,7 @@ export function CandidateManager({ onAddToast }) {
       chairmanClass: formData.chairmanClass.trim(),
       viceChairmanClass: formData.viceChairmanClass.trim(),
       photoUrl: formData.photoUrl || '/assets/paslon1.jpg',
-      tagline: formData.tagline.trim(),
-      vision: formData.vision.trim(),
-      missions: missionsArray,
-      workPrograms: programsArray
+      tagline: formData.tagline.trim()
     };
 
     if (editingCandidate) {
@@ -355,40 +333,6 @@ export function CandidateManager({ onAddToast }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Visi</label>
-            <textarea
-              className="form-textarea"
-              rows={3}
-              placeholder="Tuliskan visi besar pasangan calon..."
-              value={formData.vision}
-              onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Misi (Pisahkan tiap misi dengan baris baru / Enter)</label>
-            <textarea
-              className="form-textarea"
-              rows={4}
-              placeholder="Misi 1&#10;Misi 2&#10;Misi 3"
-              value={formData.missions}
-              onChange={(e) => setFormData({ ...formData, missions: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Program Kerja Unggulan (Pisahkan dengan baris baru / Enter)</label>
-            <textarea
-              className="form-textarea"
-              rows={3}
-              placeholder="Program 1&#10;Program 2"
-              value={formData.workPrograms}
-              onChange={(e) => setFormData({ ...formData, workPrograms: e.target.value })}
-            />
-          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
             <button type="button" className="btn btn-outline" onClick={() => setIsModalOpen(false)}>

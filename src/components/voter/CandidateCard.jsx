@@ -1,9 +1,14 @@
 import React from 'react';
-import { Eye, CheckCircle, Award } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
-export function CandidateCard({ candidate, onShowDetails, onSelectCandidate }) {
+export function CandidateCard({ candidate, onSelectCandidate }) {
   return (
-    <div className={`candidate-card ${candidate.number === 1 ? 'featured-gold' : ''}`}>
+    <div 
+      className={`candidate-card ${candidate.number === 1 ? 'featured-gold' : ''}`}
+      onClick={() => onSelectCandidate(candidate)}
+      style={{ cursor: 'pointer' }}
+      title={`Klik untuk mencoblos Paslon #${candidate.number}`}
+    >
       {/* Nomor Urut Paslon */}
       <div className="candidate-number-badge">
         #{candidate.number}
@@ -30,7 +35,7 @@ export function CandidateCard({ candidate, onShowDetails, onSelectCandidate }) {
         </div>
 
         {/* Calon Wakil Ketua */}
-        <div className="candidate-pair-names" style={{ marginTop: '0.5rem' }}>
+        <div className="candidate-pair-names" style={{ marginTop: '0.4rem' }}>
           <div className="pair-role">Calon Wakil Ketua OSIS</div>
           <div className="pair-name">{candidate.viceChairmanName}</div>
           <div className="pair-class">Kelas {candidate.viceChairmanClass}</div>
@@ -43,25 +48,25 @@ export function CandidateCard({ candidate, onShowDetails, onSelectCandidate }) {
           </div>
         )}
 
-        {/* Tombol Aksi */}
-        <div className="candidate-actions">
-          <button
-            type="button"
-            className="btn btn-outline"
-            style={{ width: '100%' }}
-            onClick={() => onShowDetails(candidate)}
-          >
-            <Eye size={17} />
-            <span>Lihat Visi, Misi &amp; Program</span>
-          </button>
-
+        {/* Tombol Aksi Langsung Coblos */}
+        <div className="candidate-actions" style={{ marginTop: 'auto' }}>
           <button
             type="button"
             className="btn btn-emerald"
-            style={{ width: '100%', fontSize: '1.05rem', padding: '0.85rem 1rem' }}
-            onClick={() => onSelectCandidate(candidate)}
+            style={{ 
+              width: '100%', 
+              fontSize: '1.05rem', 
+              padding: '0.9rem 1rem',
+              fontWeight: '800',
+              letterSpacing: '0.04em',
+              boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectCandidate(candidate);
+            }}
           >
-            <CheckCircle size={20} />
+            <CheckCircle2 size={20} />
             <span>COBLOS PASLON #{candidate.number}</span>
           </button>
         </div>
@@ -69,3 +74,4 @@ export function CandidateCard({ candidate, onShowDetails, onSelectCandidate }) {
     </div>
   );
 }
+

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
 import { isFirebaseConfigured, activeConfig, saveFirebaseCustomConfig } from '../../config/firebase';
-import { Settings, ShieldAlert, Check, Database, Flame, Clock, Building, AlertTriangle, Lock, KeyRound, Smartphone, ShieldCheck } from 'lucide-react';
+import { Settings, ShieldAlert, Check, Database, Clock, Building, AlertTriangle, Lock, KeyRound, Smartphone, ShieldCheck } from 'lucide-react';
 
 export function ElectionSettings({ onAddToast }) {
   const { settings, updateSettings, resetAllVotes } = useElection();
@@ -246,8 +246,9 @@ export function ElectionSettings({ onAddToast }) {
                 placeholder="Misal: SMABA-TPS-2026"
                 required
               />
-              <span style={{ fontSize: '0.82rem', color: '#b45309' }}>
-                ⚠️ Simpan dan bagikan kode ini <strong>hanya kepada Petugas / Operator TPS</strong> saat membuka bilik suara.
+              <span style={{ fontSize: '0.82rem', color: '#b45309', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <AlertTriangle size={14} color="#b45309" />
+                <span>Simpan dan bagikan kode ini <strong>hanya kepada Petugas / Operator TPS</strong> saat membuka bilik suara.</span>
               </span>
             </div>
           </div>
@@ -383,7 +384,7 @@ export function ElectionSettings({ onAddToast }) {
       <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Flame size={22} color="#f97316" />
+            <Database size={20} color="var(--primary)" />
             <span>Koneksi Firebase Cloud Firestore (Paket Spark Gratis)</span>
           </h3>
 

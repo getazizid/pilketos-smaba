@@ -160,7 +160,7 @@ export function AdminLogin({ onLoginSuccess }) {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-            ⚡ Akses Cepat Akun Uji Coba:
+            Akses Cepat Akun Uji Coba:
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', justifyContent: 'center' }}>
             <button
@@ -168,21 +168,21 @@ export function AdminLogin({ onLoginSuccess }) {
               className="btn btn-sm btn-outline"
               onClick={() => quickFill('admin', 'osis2026')}
             >
-              👑 Super Admin (admin / osis2026)
+              Super Admin (admin / osis2026)
             </button>
             <button
               type="button"
               className="btn btn-sm btn-outline"
               onClick={() => quickFill('operator1', 'tps1batu')}
             >
-              📋 Operator TPS (operator1 / tps1batu)
+              Operator TPS (operator1 / tps1batu)
             </button>
             <button
               type="button"
               className="btn btn-sm btn-outline"
               onClick={() => quickFill('saksi', 'saksi2026')}
             >
-              👁️ Saksi MPK (saksi / saksi2026)
+              Saksi MPK (saksi / saksi2026)
             </button>
           </div>
         </div>

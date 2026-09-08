@@ -13,19 +13,6 @@ export const INITIAL_CANDIDATES = [
     viceChairmanClass: 'X-3',
     photoUrl: '/assets/paslon1.jpg',
     tagline: 'Sinergis, Berkarakter, Unggul dalam IPTEK dan Kebudayaan',
-    vision: 'Mewujudkan OSIS SMA Negeri 1 Batu sebagai wadah aspirasi siswa yang inklusif, adaptif terhadap perkembangan teknologi, dan berakar kuat pada nilai luhur budi pekerti serta prestasi berdaya saing global.',
-    missions: [
-      'Meningkatkan kolaborasi aktif antara seluruh ekstrakurikuler dan organisasi sekolah.',
-      'Mengembangkan platform digital SMABA untuk keterbukaan aspirasi dan informasi kegiatan siswa.',
-      'Menyelenggarakan festival seni budaya dan inovasi IPTEK tahunan tingkat Malang Raya.',
-      'Memperkuat program pembinaan karakter, kedisiplinan, dan kepedulian lingkungan hidup di lingkungan sekolah.'
-    ],
-    workPrograms: [
-      'SMABA Tech & Science Fair 2026',
-      'Podcast Suara Siswa & Kotak Aspirasi Digital',
-      'Green School SMABA: Gerakan Bebas Sampah Plastik',
-      'Bakti Sosial & Pengabdian Masyarakat Kota Batu'
-    ],
     voteCount: 0
   },
   {
@@ -37,19 +24,6 @@ export const INITIAL_CANDIDATES = [
     viceChairmanClass: 'XI-7',
     photoUrl: '/assets/paslon2.jpg',
     tagline: 'Bersama Menuju Perubahan: Nyata, Transparan, Berprestasi',
-    vision: 'Transformasi OSIS SMAN 1 Batu sebagai motor penggerak siswa yang berintegritas tinggi, berprestasi akademik dan non-akademik, serta peka terhadap dinamika sosial.',
-    missions: [
-      'Membangun tata kelola OSIS yang transparan, akuntabel, dan responsif terhadap kebutuhan siswa.',
-      'Mengoptimalkan program mentoring akademik sebaya dan klinik persiapan UTBK/SNBP.',
-      'Memperluas kemitraan dengan perguruan tinggi terkemuka dan industri kreatif untuk bekal masa depan siswa.',
-      'Mendukung penuh pengembangan minat bakat di bidang e-sport, olahraga prestasi, dan kepemimpinan.'
-    ],
-    workPrograms: [
-      'SMABA Leadership Camp & Mental Health Corner',
-      'Liga Olahraga & E-Sport Antar Kelas (Classmeeting Juara)',
-      'Career Day & Expo Perguruan Tinggi Nasional',
-      'OSIS Peduli Kasih & Aksi Tanggap Bencana'
-    ],
     voteCount: 0
   },
   {
@@ -61,19 +35,6 @@ export const INITIAL_CANDIDATES = [
     viceChairmanClass: 'X-5',
     photoUrl: '/assets/paslon3.jpg',
     tagline: 'Harmoni SMABA: Berbudaya, Berjiwa Pemimpin, Menginspirasi',
-    vision: 'Menjadikan OSIS SMAN 1 Batu sebagai pusat peradaban kesiswaan yang harmonis, kreatif, menjunjung tinggi kearifan lokal Kota Wisata Batu, dan berwawasan internasional.',
-    missions: [
-      'Mempererat persaudaraan dan solidaritas antar angkatan melalui program terpadu berkala.',
-      'Menggali dan mempromosikan talenta kesenian khas Jawa Timur dan ekonomi kreatif siswa.',
-      'Menciptakan ruang dialog terbuka berkala antara perwakilan kelas, OSIS, MPK, dan pimpinan sekolah.',
-      'Membudayakan literasi digital, riset ilmiah remaja, dan bahasa asing aktif.'
-    ],
-    workPrograms: [
-      'SMABA Cultural Night & Art Exhibition 2026',
-      'Forum Parlemen Siswa (Diskusi Rutin Bulanan)',
-      'English & Foreign Language Conversation Club',
-      'SMABA Creative Hub & Kewirausahaan Mandiri'
-    ],
     voteCount: 0
   }
 ];

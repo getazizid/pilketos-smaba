@@ -3,11 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useElection } from '../../context/ElectionContext';
 import { VoterLogin } from './VoterLogin';
 import { CandidateCard } from './CandidateCard';
-import { CandidateModal } from './CandidateModal';
 import { VoteConfirmModal } from './VoteConfirmModal';
 import { VoteReceipt } from './VoteReceipt';
 import { TpsActivationGate } from './TpsActivationGate';
-import { Shield, Sparkles, User, Info } from 'lucide-react';
+import { Shield, Sparkles, User, Info, CheckCircle2 } from 'lucide-react';
 
 export function BallotStation({ onAddToast }) {
   return (
@@ -21,7 +20,6 @@ function BallotStationInner({ onAddToast }) {
   const { currentVoter } = useAuth();
   const { candidates, submitVote, settings } = useElection();
 
-  const [selectedCandidateForDetails, setSelectedCandidateForDetails] = useState(null);
   const [selectedCandidateForVote, setSelectedCandidateForVote] = useState(null);
   const [votedSuccessData, setVotedSuccessData] = useState(null);
 
@@ -130,19 +128,12 @@ function BallotStationInner({ onAddToast }) {
           <CandidateCard
             key={cand.id}
             candidate={cand}
-            onShowDetails={(c) => setSelectedCandidateForDetails(c)}
             onSelectCandidate={(c) => setSelectedCandidateForVote(c)}
           />
         ))}
       </div>
 
-      {/* Modal Detail Visi & Misi */}
-      <CandidateModal
-        candidate={selectedCandidateForDetails}
-        isOpen={Boolean(selectedCandidateForDetails)}
-        onClose={() => setSelectedCandidateForDetails(null)}
-        onSelectCandidate={(c) => setSelectedCandidateForVote(c)}
-      />
+      {/* Modal Konfirmasi Coblos Langsung */}
 
       {/* Modal Konfirmasi Coblos */}
       <VoteConfirmModal

@@ -137,7 +137,7 @@ export function TpsActivationGate({ children }) {
             color: 'var(--text-secondary)'
           }}>
             <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '0.6rem' }}>
-              📍 Petunjuk Pelaksanaan Hak Suara:
+              Petunjuk Pelaksanaan Hak Suara:
             </div>
             <ol style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <li>Silakan datang langsung ke <strong>{settings.tpsCode || 'TPS-01 Aula Graha SMABA'}</strong>.</li>
@@ -273,7 +273,7 @@ export function TpsActivationGate({ children }) {
             color: 'var(--text-muted)'
           }}>
             <div>
-              💡 <em>Petunjuk Panitia: Kode Keamanan default sistem adalah: </em>
+              <em>Petunjuk Panitia: Kode Keamanan default sistem adalah: </em>
               <strong 
                 style={{ color: '#b45309', cursor: 'pointer', textDecoration: 'underline' }}
                 onClick={() => setInputCode(settings.tpsSecurityCode || 'SMABA-TPS-2026')}

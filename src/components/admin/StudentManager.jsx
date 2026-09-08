@@ -9,7 +9,7 @@ import {
   Trash2, 
   RotateCcw, 
   Printer, 
-  Sparkles, 
+  PlusCircle, 
   Filter, 
   CheckCircle2, 
   XCircle 
@@ -224,7 +224,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                 onClick={handleGenerateSampleStudents}
                 title="Generate 15 Siswa Otomatis"
               >
-                <Sparkles size={16} color="var(--gold)" />
+                <PlusCircle size={16} />
                 <span>+15 Siswa Otomatis</span>
               </button>
 

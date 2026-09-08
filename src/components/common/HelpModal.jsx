@@ -37,18 +37,16 @@ export function HelpModal({ isOpen, onClose }) {
         {/* Langkah Memilih */}
         <h4 style={{ color: 'var(--text-primary)', fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Vote size={18} color="var(--primary-light)" />
-          <span>7 Langkah Mudah Menggunakan Hak Suara</span>
+          <span>5 Langkah Mudah Menggunakan Hak Suara</span>
         </h4>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2rem' }}>
           {[
-            { num: 1, title: 'Ambil Kartu Pemilih', text: 'Tunjukkan kartu pelajar atau sebutkan nama ke Panitia TPS di pintu masuk untuk memperoleh Kartu Pemilih berisi Token Akses.' },
-            { num: 2, title: 'Menuju Bilik Suara', text: 'Masuki bilik suara digital yang telah disiapkan di Graha Aula SMABA.' },
-            { num: 3, title: 'Input NISN & Token', text: 'Ketik 10 digit NISN Anda dan 6 karakter Token Rahasia yang tertera pada kartu pemilih.' },
-            { num: 4, title: 'Pelajari Pasangan Calon', text: 'Klik "Lihat Visi, Misi & Program" untuk menyimak komitmen kandidat Ketua dan Wakil Ketua OSIS.' },
-            { num: 5, title: 'Lakukan Pencoblosan', text: 'Tekan tombol hijau "COBLOS PASLON INI" pada kandidat pilihan hati nurani Anda.' },
-            { num: 6, title: 'Konfirmasi Suara Sah', text: 'Pastikan pilihan Anda telah sesuai pada jendela konfirmasi lalu tekan "YA, COBLOS SEKARANG".' },
-            { num: 7, title: 'Ambil Bukti & Tinta Pemilu', text: 'Simpan/unduh tanda terima digital Anda dan celupkan jari ke tinta pemilu sebagai tanda telah memilih.' }
+            { num: 1, title: 'Ambil Kartu Pemilih', text: 'Tunjukkan kartu pelajar ke Petugas TPS di meja registrasi untuk memperoleh Kartu Pemilih berisi Token Akses.' },
+            { num: 2, title: 'Menuju Bilik Suara', text: 'Masuki komputer bilik suara digital resmi yang telah diotorisasi Panitia di Graha Aula SMABA.' },
+            { num: 3, title: 'Input NISN & Token', text: 'Ketik 10 digit NISN Anda dan 6 karakter Token Rahasia yang tertera pada kartu fisik.' },
+            { num: 4, title: 'Langsung Coblos Paslon', text: 'Klik foto atau tombol hijau "COBLOS PASLON" pada kandidat pilihan Anda.' },
+            { num: 5, title: 'Konfirmasi & Ambil Tinta', text: 'Tekan "YA, COBLOS SEKARANG" untuk konfirmasi suara, simpan bukti digital, dan celupkan jari ke tinta pemilu.' }
           ].map((step) => (
             <div
               key={step.num}

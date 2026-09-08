@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { AlertTriangle, CheckCircle2, ShieldCheck, Loader2 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export function VoteConfirmModal({ candidate, isOpen, onClose, onConfirmVote }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -10,18 +9,6 @@ export function VoteConfirmModal({ candidate, isOpen, onClose, onConfirmVote }) 
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
-
-    // Trigger celebration confetti
-    try {
-      confetti({
-        particleCount: 120,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-    } catch (e) {
-      console.warn('Confetti error:', e);
-    }
-
     await onConfirmVote(candidate);
     setIsSubmitting(false);
   };
