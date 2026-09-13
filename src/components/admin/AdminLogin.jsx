@@ -49,12 +49,6 @@ export function AdminLogin({ onLoginSuccess }) {
     if (onLoginSuccess) onLoginSuccess(matchedUser);
   };
 
-  const quickFill = (u, p) => {
-    setUsername(u);
-    setPassword(p);
-    setErrorMsg('');
-  };
-
   return (
     <div className="container-narrow" style={{ marginTop: '2rem' }}>
       <div className="glass-panel glass-panel-elevated" style={{ padding: '2.5rem 2rem' }}>
@@ -151,41 +145,6 @@ export function AdminLogin({ onLoginSuccess }) {
             <ArrowRight size={18} />
           </button>
         </form>
-
-        {/* Quick Fill Helper */}
-        <div style={{
-          marginTop: '2rem',
-          paddingTop: '1.5rem',
-          borderTop: '1px dashed var(--border-glass)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-            Akses Cepat Akun Uji Coba:
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', justifyContent: 'center' }}>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline"
-              onClick={() => quickFill('admin', 'osis2026')}
-            >
-              Super Admin (admin / osis2026)
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline"
-              onClick={() => quickFill('operator1', 'tps1batu')}
-            >
-              Operator TPS (operator1 / tps1batu)
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline"
-              onClick={() => quickFill('saksi', 'saksi2026')}
-            >
-              Saksi MPK (saksi / saksi2026)
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
