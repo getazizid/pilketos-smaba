@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -12,7 +12,7 @@ import {
   ShieldAlert, 
   FileText 
 } from 'lucide-react';
-import { formatNumber, calculatePercentage, formatIndonesianDate } from '../../utils/helpers';
+import { formatNumber, calculatePercentage, formatIndonesianDate, sortClassNames, getStandardSchoolClasses } from '../../utils/helpers';
 
 export function AdminDashboard({ onNavigate }) {
   const { 
@@ -28,25 +28,68 @@ export function AdminDashboard({ onNavigate }) {
   } = useElection();
   const { adminUser } = useAuth();
 
-  // Partisipasi per jenjang kelas (X, XI, XII)
-  const classStats = {
-    x: { total: 0, voted: 0 },
-    xi: { total: 0, voted: 0 },
-    xii: { total: 0, voted: 0 }
-  };
+  const [activeClassTab, setActiveClassTab] = useState('ALL'); // 'ALL', 'X', 'XI', 'XII'
+  const [classSearch, setClassSearch] = useState('');
+  const [onlyWithVoters, setOnlyWithVoters] = useState(true);
 
-  students.forEach((s) => {
-    const cls = (s.class || '').toUpperCase();
-    let group = null;
-    if (cls.startsWith('XII-') || cls.startsWith('XII ') || cls === 'XII') group = 'xii';
-    else if (cls.startsWith('XI-') || cls.startsWith('XI ') || cls === 'XI') group = 'xi';
-    else if (cls.startsWith('X-') || cls.startsWith('X ') || cls === 'X') group = 'x';
+  // Agregasi partisipasi suara untuk setiap masing-masing kelas individual (X-1..X-12, XI-1..XI-12, XII-1..XII-12, dll)
+  const perClassStats = useMemo(() => {
+    const std = getStandardSchoolClasses();
+    const map = {};
 
-    if (group && classStats[group]) {
-      classStats[group].total += 1;
-      if (s.hasVoted) classStats[group].voted += 1;
-    }
-  });
+    // Inisialisasi 36 kelas standar
+    std.all.forEach((cls) => {
+      let level = 'OTHER';
+      if (cls.startsWith('X-')) level = 'X';
+      else if (cls.startsWith('XI-')) level = 'XI';
+      else if (cls.startsWith('XII-')) level = 'XII';
+      map[cls] = { className: cls, total: 0, voted: 0, level, isStandard: true };
+    });
+
+    // Akumulasi data aktual dari DPT siswa
+    students.forEach((s) => {
+      if ((s.voterType || 'SISWA') === 'SISWA' && s.class) {
+        const cls = s.class.trim();
+        if (!map[cls]) {
+          let level = 'OTHER';
+          const upper = cls.toUpperCase();
+          if (upper.startsWith('XII-') || upper.startsWith('XII ') || upper === 'XII') level = 'XII';
+          else if (upper.startsWith('XI-') || upper.startsWith('XI ') || upper === 'XI') level = 'XI';
+          else if (upper.startsWith('X-') || upper.startsWith('X ') || upper === 'X') level = 'X';
+          map[cls] = { className: cls, total: 0, voted: 0, level, isStandard: false };
+        }
+        map[cls].total += 1;
+        if (s.hasVoted) {
+          map[cls].voted += 1;
+        }
+      }
+    });
+
+    const sortedKeys = sortClassNames(Object.keys(map));
+    return sortedKeys.map((k) => map[k]);
+  }, [students]);
+
+  // Filter kelas berdasarkan tab aktif, pencarian, dan opsi hanya kelas ber-DPT
+  const filteredClassStats = useMemo(() => {
+    return perClassStats.filter((c) => {
+      if (activeClassTab !== 'ALL' && c.level !== activeClassTab) return false;
+      if (onlyWithVoters && c.total === 0) return false;
+      if (classSearch && !c.className.toLowerCase().includes(classSearch.toLowerCase().trim())) return false;
+      return true;
+    });
+  }, [perClassStats, activeClassTab, onlyWithVoters, classSearch]);
+
+  // Hitung jumlah kelas per tingkatan untuk badge tab
+  const tabCounts = useMemo(() => {
+    const counts = { ALL: 0, X: 0, XI: 0, XII: 0 };
+    perClassStats.forEach((c) => {
+      if (!onlyWithVoters || c.total > 0) {
+        counts.ALL += 1;
+        if (counts[c.level] !== undefined) counts[c.level] += 1;
+      }
+    });
+    return counts;
+  }, [perClassStats, onlyWithVoters]);
 
   // Urutkan paslon berdasarkan perolehan suara tertinggi untuk quick count ranking
   const sortedCandidates = [...candidates].sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
@@ -258,45 +301,249 @@ export function AdminDashboard({ onNavigate }) {
 
         {/* Partisipasi Tingkat Kelas & Log Audit */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* Partisipasi Kelas X, XI, XII */}
-          <div className="glass-panel" style={{ padding: '1.75rem' }}>
-            <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
-              Partisipasi Berdasarkan Tingkatan Kelas
-            </h3>
+          {/* Partisipasi Masing-Masing Kelas */}
+          <div className="glass-panel" style={{ padding: '1.5rem 1.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.18rem', color: 'var(--text-primary)' }}>
+                  Partisipasi Berdasarkan Kelas
+                </h3>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Monitoring kehadiran pemilih per masing-masing kelas individual
+                </div>
+              </div>
+              <span className="badge badge-blue" style={{ fontSize: '0.72rem' }}>
+                {filteredClassStats.length} Kelas
+              </span>
+            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[
-                { name: 'Kelas X (X-1 s/d X-12)', data: classStats.x, color: '#2563eb' },
-                { name: 'Kelas XI (XI-1 s/d XI-12)', data: classStats.xi, color: '#059669' },
-                { name: 'Kelas XII (XII-1 s/d XII-12)', data: classStats.xii, color: '#7c3aed' }
-              ].map((lvl, idx) => {
-                const pct = lvl.data.total > 0 ? ((lvl.data.voted / lvl.data.total) * 100).toFixed(1) : 0;
-                return (
-                  <div key={idx}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                      <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{lvl.name}</span>
-                      <span style={{ color: 'var(--text-muted)' }}>
-                        {lvl.data.voted} / {lvl.data.total} siswa ({pct}%)
-                      </span>
-                    </div>
-                    <div style={{
-                      width: '100%',
-                      height: '8px',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      borderRadius: 'var(--radius-pill)',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${pct}%`,
-                        height: '100%',
-                        background: lvl.color,
+            {/* Filter Tabs & Search Bar */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              {/* Tab Tingkatan */}
+              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'ALL', label: 'Semua' },
+                  { id: 'X', label: 'Kelas X' },
+                  { id: 'XI', label: 'Kelas XI' },
+                  { id: 'XII', label: 'Kelas XII' }
+                ].map((tab) => {
+                  const isActive = activeClassTab === tab.id;
+                  const count = tabCounts[tab.id] ?? 0;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveClassTab(tab.id)}
+                      style={{
+                        padding: '0.28rem 0.65rem',
+                        fontSize: '0.76rem',
+                        fontWeight: '700',
                         borderRadius: 'var(--radius-pill)',
-                        transition: 'width 0.6s ease'
-                      }} />
+                        border: '1px solid',
+                        borderColor: isActive ? 'var(--primary)' : 'var(--border-subtle)',
+                        background: isActive ? 'var(--primary)' : '#ffffff',
+                        color: isActive ? '#ffffff' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>{tab.label}</span>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        padding: '0.05rem 0.35rem',
+                        borderRadius: 'var(--radius-pill)',
+                        background: isActive ? 'rgba(255, 255, 255, 0.25)' : '#f1f5f9',
+                        color: isActive ? '#ffffff' : 'var(--text-muted)'
+                      }}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search & Toggle Only With Voters */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: '1 1 160px' }}>
+                  <input
+                    type="text"
+                    placeholder="Cari kelas (misal: X-1)..."
+                    value={classSearch}
+                    onChange={(e) => setClassSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.35rem 0.65rem',
+                      fontSize: '0.78rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)',
+                      background: '#ffffff',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={onlyWithVoters}
+                    onChange={(e) => setOnlyWithVoters(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span>Hanya kelas ber-DPT</span>
+                </label>
+              </div>
+            </div>
+
+            {/* List Masing-Masing Kelas (Scrollable) */}
+            <div style={{
+              maxHeight: '340px',
+              overflowY: 'auto',
+              paddingRight: '0.35rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
+            }}>
+              {filteredClassStats.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '2rem 1rem',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.82rem',
+                  background: '#f8fafc',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px dashed #e2e8f0'
+                }}>
+                  Tidak ada kelas yang cocok dengan kriteria filter.
+                  {onlyWithVoters && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                        onClick={() => setOnlyWithVoters(false)}
+                      >
+                        Tampilkan Seluruh 36 Kelas Reguler
+                      </button>
                     </div>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              ) : (
+                filteredClassStats.map((c) => {
+                  const pct = c.total > 0 ? ((c.voted / c.total) * 100).toFixed(1) : '0.0';
+                  const isComplete = c.total > 0 && c.voted === c.total;
+                  
+                  // Warna bar per jenjang kelas
+                  let barColor = 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)';
+                  let badgeBg = '#eff6ff';
+                  let badgeColor = '#1d4ed8';
+                  let badgeBorder = '#bfdbfe';
+
+                  if (c.level === 'XI') {
+                    barColor = 'linear-gradient(90deg, #10b981 0%, #059669 100%)';
+                    badgeBg = '#ecfdf5';
+                    badgeColor = '#047857';
+                    badgeBorder = '#a7f3d0';
+                  } else if (c.level === 'XII') {
+                    barColor = 'linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%)';
+                    badgeBg = '#f5f3ff';
+                    badgeColor = '#6d28d9';
+                    badgeBorder = '#ddd6fe';
+                  } else if (c.level === 'OTHER') {
+                    barColor = 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)';
+                    badgeBg = '#fffbeb';
+                    badgeColor = '#b45309';
+                    badgeBorder = '#fde68a';
+                  }
+
+                  if (isComplete) {
+                    barColor = 'linear-gradient(90deg, #10b981 0%, #059669 100%)';
+                  }
+
+                  return (
+                    <div
+                      key={c.className}
+                      style={{
+                        padding: '0.55rem 0.75rem',
+                        background: '#ffffff',
+                        border: '1px solid #f1f5f9',
+                        borderRadius: 'var(--radius-sm)',
+                        transition: 'background 0.15s ease'
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '0.82rem',
+                        marginBottom: '0.35rem',
+                        gap: '0.5rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: '800',
+                            padding: '0.15rem 0.5rem',
+                            borderRadius: 'var(--radius-sm)',
+                            background: badgeBg,
+                            color: badgeColor,
+                            border: `1px solid ${badgeBorder}`,
+                            letterSpacing: '0.02em'
+                          }}>
+                            {c.className}
+                          </span>
+                          {isComplete && (
+                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--emerald)' }}>
+                              ✓ 100% Selesai
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                            <strong style={{ color: 'var(--text-primary)' }}>{c.voted}</strong> / {c.total} pemilih
+                          </span>
+                          <span style={{
+                            fontWeight: '700',
+                            fontSize: '0.78rem',
+                            color: isComplete ? 'var(--emerald)' : parseFloat(pct) > 0 ? badgeColor : 'var(--text-muted)',
+                            minWidth: '42px',
+                            textAlign: 'right'
+                          }}>
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        width: '100%',
+                        height: '7px',
+                        background: '#f1f5f9',
+                        borderRadius: 'var(--radius-pill)',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${pct}%`,
+                          height: '100%',
+                          background: c.total === 0 ? '#e2e8f0' : barColor,
+                          borderRadius: 'var(--radius-pill)',
+                          transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                        }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 

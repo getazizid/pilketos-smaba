@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { generateVoterToken } from '../../utils/tokenGenerator';
 import { downloadDptTemplateExcel, exportDptToExcel, parseDptExcelFile } from '../../utils/excelService';
+import { sortClassNames, getStandardSchoolClasses } from '../../utils/helpers';
 import { Modal } from '../common/Modal';
 
 export function StudentManager({ onNavigateToPrint, onAddToast }) {
@@ -61,6 +62,44 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     token: ''
   });
 
+  // Hitung jumlah pemilih per kelas & susun daftar opsi kelas individual (X-1..X-12, XI-1..XI-12, XII-1..XII-12, dll)
+  const { classOptions, classCounts } = useMemo(() => {
+    const std = getStandardSchoolClasses();
+    const xSet = new Set(std.x);
+    const xiSet = new Set(std.xi);
+    const xiiSet = new Set(std.xii);
+    const otherSet = new Set();
+    const counts = {};
+
+    students.forEach((s) => {
+      if ((s.voterType || 'SISWA') === 'SISWA' && s.class) {
+        const cls = s.class.trim();
+        counts[cls] = (counts[cls] || 0) + 1;
+
+        const upper = cls.toUpperCase();
+        if (upper.startsWith('XII-') || upper.startsWith('XII ') || upper === 'XII') {
+          xiiSet.add(cls);
+        } else if (upper.startsWith('XI-') || upper.startsWith('XI ') || upper === 'XI') {
+          xiSet.add(cls);
+        } else if (upper.startsWith('X-') || upper.startsWith('X ') || upper === 'X') {
+          xSet.add(cls);
+        } else {
+          otherSet.add(cls);
+        }
+      }
+    });
+
+    return {
+      classCounts: counts,
+      classOptions: {
+        x: sortClassNames(Array.from(xSet)),
+        xi: sortClassNames(Array.from(xiSet)),
+        xii: sortClassNames(Array.from(xiiSet)),
+        others: sortClassNames(Array.from(otherSet))
+      }
+    };
+  }, [students]);
+
   // Filtered list
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
@@ -75,9 +114,17 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
 
       let matchClass = true;
       if (filterClass !== 'ALL') {
-        if (filterClass === 'X') matchClass = (s.class || '').startsWith('X-') || s.class === 'X';
-        else if (filterClass === 'XI') matchClass = (s.class || '').startsWith('XI-') || s.class === 'XI';
-        else if (filterClass === 'XII') matchClass = (s.class || '').startsWith('XII-') || s.class === 'XII';
+        const sClass = (s.class || '').trim().toUpperCase();
+        if (filterClass === 'ALL_X' || filterClass === 'X') {
+          matchClass = sClass.startsWith('X-') || sClass.startsWith('X ') || sClass === 'X';
+        } else if (filterClass === 'ALL_XI' || filterClass === 'XI') {
+          matchClass = sClass.startsWith('XI-') || sClass.startsWith('XI ') || sClass === 'XI';
+        } else if (filterClass === 'ALL_XII' || filterClass === 'XII') {
+          matchClass = sClass.startsWith('XII-') || sClass.startsWith('XII ') || sClass === 'XII';
+        } else {
+          // Cocokkan persis masing-masing kelas individual (misal: 'X-1', 'XI-4', 'XII-12')
+          matchClass = sClass === filterClass.trim().toUpperCase();
+        }
       }
 
       let matchStatus = true;
@@ -519,7 +566,13 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
             <select
               className="form-select"
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterCategory(val);
+                if (val === 'GURU' || val === 'TENDIK') {
+                  setFilterClass('ALL');
+                }
+              }}
             >
               <option value="ALL">Semua Jenis Pemilih</option>
               <option value="SISWA">Hanya Siswa ({totalSiswa ?? students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length})</option>
@@ -528,18 +581,53 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
             </select>
           </div>
 
-          {/* Filter Jenjang Kelas (Khusus Siswa / Semua) */}
+          {/* Filter Masing-Masing Kelas Individual */}
           <div>
             <select
               className="form-select"
               value={filterClass}
               onChange={(e) => setFilterClass(e.target.value)}
               disabled={filterCategory === 'GURU' || filterCategory === 'TENDIK'}
+              title="Filter Masing-Masing Kelas"
             >
-              <option value="ALL">Semua Kelas</option>
-              <option value="X">Kelas X (X-1 s/d X-12)</option>
-              <option value="XI">Kelas XI (XI-1 s/d XI-12)</option>
-              <option value="XII">Kelas XII (XII-1 s/d XII-12)</option>
+              <option value="ALL">Semua Kelas Siswa</option>
+
+              <optgroup label="Tingkat X">
+                <option value="ALL_X">-- Semua Kelas X (X-1 s/d X-12) --</option>
+                {classOptions.x.map((cls) => (
+                  <option key={cls} value={cls}>
+                    Kelas {cls} {classCounts[cls] ? `(${classCounts[cls]} pemilih)` : ''}
+                  </option>
+                ))}
+              </optgroup>
+
+              <optgroup label="Tingkat XI">
+                <option value="ALL_XI">-- Semua Kelas XI (XI-1 s/d XI-12) --</option>
+                {classOptions.xi.map((cls) => (
+                  <option key={cls} value={cls}>
+                    Kelas {cls} {classCounts[cls] ? `(${classCounts[cls]} pemilih)` : ''}
+                  </option>
+                ))}
+              </optgroup>
+
+              <optgroup label="Tingkat XII">
+                <option value="ALL_XII">-- Semua Kelas XII (XII-1 s/d XII-12) --</option>
+                {classOptions.xii.map((cls) => (
+                  <option key={cls} value={cls}>
+                    Kelas {cls} {classCounts[cls] ? `(${classCounts[cls]} pemilih)` : ''}
+                  </option>
+                ))}
+              </optgroup>
+
+              {classOptions.others.length > 0 && (
+                <optgroup label="Kelas / Kelompok Lain">
+                  {classOptions.others.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls} {classCounts[cls] ? `(${classCounts[cls]} pemilih)` : ''}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
@@ -870,11 +958,19 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
               <input
                 type="text"
                 className="form-input"
+                list="school-class-suggestions"
                 placeholder={formData.voterType === 'SISWA' ? 'Contoh: X-1 / XII-4' : formData.voterType === 'GURU' ? 'Contoh: Guru Matematika' : 'Contoh: Staf TU / Operator IT'}
                 value={formData.class}
                 onChange={(e) => setFormData({ ...formData, class: e.target.value })}
                 required
               />
+              {formData.voterType === 'SISWA' && (
+                <datalist id="school-class-suggestions">
+                  {[...classOptions.x, ...classOptions.xi, ...classOptions.xii, ...classOptions.others].map((cls) => (
+                    <option key={cls} value={cls} />
+                  ))}
+                </datalist>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">L / P</label>

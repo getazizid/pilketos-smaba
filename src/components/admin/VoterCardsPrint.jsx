@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { Printer, ArrowLeft, Filter } from 'lucide-react';
+import { sortClassNames } from '../../utils/helpers';
 
 export function VoterCardsPrint({ onBack }) {
   const { students, settings } = useElection();
   const [selectedCategory, setSelectedCategory] = useState('ALL'); // 'ALL', 'SISWA', 'GURU', 'TENDIK'
   const [selectedClass, setSelectedClass] = useState('ALL');
 
-  // Ambil daftar kelas unik
-  const uniqueClasses = Array.from(new Set(students.map(s => s.class))).sort();
+  // Ambil daftar kelas unik dengan pengurutan alami (X-1 s/d XII-12)
+  const uniqueClasses = sortClassNames(Array.from(new Set(students.map(s => s.class).filter(Boolean))));
 
   const filteredCards = students.filter(s => {
     const sCat = s.voterType || 'SISWA';
