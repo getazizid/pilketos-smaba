@@ -140,7 +140,7 @@ export function TpsActivationGate({ children }) {
               Petunjuk Pelaksanaan Hak Suara:
             </div>
             <ol style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <li>Silakan datang langsung ke <strong>{settings.tpsCode || 'TPS-01 Aula Graha SMABA'}</strong>.</li>
+              <li>Silakan datang langsung ke <strong>{settings.tpsCode || 'TPS SMAN 1 Batu'}</strong>.</li>
               <li>Tunjukkan Kartu Pelajar di meja registrasi untuk mendapatkan <strong>Kartu Pemilih Fisik</strong>.</li>
               <li>Masuki bilik suara dan gunakan perangkat komputer resmi yang telah diverifikasi Panitia TPS.</li>
             </ol>

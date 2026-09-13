@@ -80,7 +80,7 @@ export function QuickCountDisplay({ onBack }) {
               PILKETOS SMAN 1 BATU 2026
             </h1>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              SMA NEGERI 1 BATU &bull; TPS-01 Graha Aula SMABA
+              SMA NEGERI 1 BATU &bull; {settings.tpsCode || 'TPS SMAN 1 Batu'}
             </div>
           </div>
         </div>

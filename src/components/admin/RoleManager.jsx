@@ -15,7 +15,7 @@ export function RoleManager({ onAddToast }) {
     username: '',
     name: '',
     role: 'OPERATOR',
-    tps: 'TPS-01 Aula Graha SMABA'
+    tps: 'TPS SMAN 1 Batu'
   });
 
   const handleAddUser = (e) => {
@@ -34,7 +34,7 @@ export function RoleManager({ onAddToast }) {
       username: formData.username.trim().toLowerCase(),
       name: formData.name.trim(),
       role: formData.role,
-      tps: formData.tps
+      tps: formData.tps.trim() || 'TPS SMAN 1 Batu'
     });
 
     setIsAddModalOpen(false);
@@ -89,68 +89,80 @@ export function RoleManager({ onAddToast }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '1rem',
-        marginBottom: '2rem'
+        marginBottom: '1.5rem'
       }}>
         <div>
           <h2 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
-            Pengaturan Hak Akses &amp; Akun Staf
+            Manajemen Hak Akses &amp; Akun Petugas
           </h2>
           <p style={{ fontSize: '0.9rem' }}>
-            Kelola hak akses Super Admin, Panitia Operator TPS, dan Saksi Pemilihan
+            Kelola akun panitia, pengawas bilik, dan saksi pemilihan
           </p>
         </div>
 
         {isSuperAdmin && (
-          <button type="button" className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
-            <Plus size={18} />
-            <span>Tambah Akun Staf Baru</span>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              setFormData({
+                username: '',
+                name: '',
+                role: 'OPERATOR',
+                tps: 'TPS SMAN 1 Batu'
+              });
+              setIsAddModalOpen(true);
+            }}
+          >
+            <UserPlus size={17} />
+            <span>Tambah Akun Petugas</span>
           </button>
         )}
       </div>
 
-      {/* Penjelasan Peran */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-        <div className="glass-panel" style={{ padding: '1.25rem', borderLeft: '4px solid var(--gold)' }}>
-          <div style={{ fontWeight: '700', color: 'var(--gold)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      {/* Role Explanations */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="glass-panel" style={{ padding: '1.25rem', borderLeft: '4px solid var(--primary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '0.4rem' }}>
             <Shield size={18} />
-            <span>Super Admin</span>
+            <span>SUPER ADMIN</span>
           </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: '0.85rem' }}>
             Akses tak terbatas: konfigurasi voting, manajemen paslon, DPT siswa, reset suara, berita acara, dan pengaturan server.
-          </div>
+          </p>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.25rem', borderLeft: '4px solid var(--primary-light)' }}>
-          <div style={{ fontWeight: '700', color: 'var(--primary-light)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <UserCheck size={18} />
-            <span>Operator / Panitia TPS</span>
+        <div className="glass-panel" style={{ padding: '1.25rem', borderLeft: '4px solid var(--gold)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '800', color: '#b45309', marginBottom: '0.4rem' }}>
+            <Key size={18} />
+            <span>OPERATOR TPS</span>
           </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: '0.85rem' }}>
             Akses operasional: verifikasi pemilih, cetak kartu pemilih, reset hak pilih darurat siswa di bilik TPS.
-          </div>
+          </p>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.25rem', borderLeft: '4px solid var(--purple)' }}>
-          <div style={{ fontWeight: '700', color: '#c4b5fd', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="glass-panel" style={{ padding: '1.25rem', borderLeft: '4px solid var(--emerald)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '800', color: 'var(--emerald)', marginBottom: '0.4rem' }}>
             <Eye size={18} />
-            <span>Saksi Paslon</span>
+            <span>SAKSI PASLON</span>
           </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Akses transparansi (Read-Only): memantau live quick count, melihat daftar pemilih dan mengunduh Berita Acara.
-          </div>
+          <p style={{ fontSize: '0.85rem' }}>
+            Mode pantau (Baca Saja): memantau live audit log dan memeriksa perolehan suara tanpa wewenang mengubah data.
+          </p>
         </div>
       </div>
 
-      {/* Tabel Akun Pengguna */}
+      {/* User Table */}
       <div className="table-responsive">
         <table className="data-table">
           <thead>
             <tr>
               <th>No</th>
-              <th>Nama Staf</th>
               <th>Username</th>
+              <th>Nama Lengkap Petugas</th>
               <th>Hak Akses (Role)</th>
-              <th>Penugasan / Lokasi</th>
+              <th>Penugasan TPS</th>
               {isSuperAdmin && <th style={{ textAlign: 'center' }}>Aksi</th>}
             </tr>
           </thead>
@@ -158,26 +170,35 @@ export function RoleManager({ onAddToast }) {
             {users.map((u, idx) => (
               <tr key={u.id}>
                 <td>{idx + 1}</td>
-                <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{u.name}</td>
                 <td>
-                  <code style={{ color: 'var(--primary-light)' }}>{u.username}</code>
+                  <code style={{ fontWeight: '700', color: 'var(--primary-light)' }}>{u.username}</code>
                 </td>
-                <td>{getRoleBadge(u.role)}</td>
-                <td style={{ fontSize: '0.85rem' }}>{u.tps || 'Pusat'}</td>
+                <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{u.name}</td>
+                <td>
+                  {u.role === 'ADMIN' && <span className="badge badge-purple">Super Admin</span>}
+                  {u.role === 'OPERATOR' && <span className="badge badge-gold">Operator TPS</span>}
+                  {u.role === 'SAKSI' && <span className="badge badge-green">Saksi Paslon</span>}
+                </td>
+                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {u.tps || 'Pusat'}
+                </td>
                 {isSuperAdmin && (
-                  <td style={{ textAlign: 'center' }}>
-                    {u.username !== 'admin' ? (
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(u)}
-                        title="Hapus Akun"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Akun Utama</span>
-                    )}
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                      {u.username !== 'admin' ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger"
+                          onClick={() => handleDeleteUser(u.id, u.name)}
+                          title="Hapus Akun"
+                          style={{ padding: '0.35rem 0.6rem' }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Akun Utama</span>
+                      )}
+                    </div>
                   </td>
                 )}
               </tr>
@@ -186,11 +207,11 @@ export function RoleManager({ onAddToast }) {
         </table>
       </div>
 
-      {/* Modal Add User */}
+      {/* Modal Tambah User */}
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        title="Tambah Akun Staf / Panitia Baru"
+        title="Tambah Akun Petugas Baru"
         maxWidth="500px"
       >
         <form onSubmit={handleAddUser}>
@@ -207,7 +228,7 @@ export function RoleManager({ onAddToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Username</label>
+            <label className="form-label">Username Login (Huruf kecil tanpa spasi)</label>
             <input
               type="text"
               className="form-input"
@@ -219,14 +240,14 @@ export function RoleManager({ onAddToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Hak Akses (Role)</label>
+            <label className="form-label">Tingkat Akses (Role)</label>
             <select
               className="form-select"
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             >
-              <option value="OPERATOR">Operator / Panitia TPS (Verifikasi & Cetak)</option>
-              <option value="SAKSI">Saksi Paslon (Hanya Melihat & Berita Acara)</option>
+              <option value="OPERATOR">Operator TPS (Verifikasi &amp; Cetak Kartu)</option>
+              <option value="SAKSI">Saksi Paslon (Hanya Melihat &amp; Berita Acara)</option>
               <option value="ADMIN">Super Admin (Akses Penuh)</option>
             </select>
           </div>
@@ -236,7 +257,7 @@ export function RoleManager({ onAddToast }) {
             <input
               type="text"
               className="form-input"
-              placeholder="Contoh: TPS-01 Aula / TPS-02 Perpustakaan"
+              placeholder="Contoh: TPS SMAN 1 Batu"
               value={formData.tps}
               onChange={(e) => setFormData({ ...formData, tps: e.target.value })}
             />

@@ -102,7 +102,7 @@ export function VoteReceipt({ voter, votedTimestamp, onFinish }) {
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lokasi TPS</div>
               <div style={{ fontSize: '0.95rem', fontWeight: '600', color: '#0f172a' }}>
-                {settings.tpsCode || 'TPS-01 Aula Graha SMABA'}
+                {settings.tpsCode || 'TPS SMAN 1 Batu'}
               </div>
             </div>
           </div>

@@ -62,7 +62,7 @@ export const INITIAL_SETTINGS = {
   startTime: '2026-09-08T07:30',
   endTime: '2026-09-08T14:30',
   allowLiveCount: true,
-  tpsCode: 'TPS-01 Aula Graha SMABA',
+  tpsCode: 'TPS SMAN 1 Batu',
   requireTpsCode: true,
   tpsSecurityCode: 'SMABA-TPS-2026',
   blockMobile: true
@@ -79,9 +79,9 @@ export const INITIAL_USERS = [
   {
     id: 'user-operator1',
     username: 'operator1',
-    name: 'Panitia TPS 01 (Aula)',
+    name: 'Panitia TPS (SMAN 1 Batu)',
     role: 'OPERATOR',
-    tps: 'TPS-01 Aula'
+    tps: 'TPS SMAN 1 Batu'
   },
   {
     id: 'user-saksi',

@@ -105,7 +105,7 @@ export function OfficialReport({ onBack }) {
 
         {/* NARASI PEMBUKA */}
         <div style={{ fontSize: '11pt', lineHeight: '1.6', textAlign: 'justify', marginBottom: '1.5rem' }}>
-          Pada hari ini, <strong>Selasa</strong> tanggal <strong>8 September 2026</strong>, bertempat di Graha Aula SMA Negeri 1 Batu, telah dilaksanakan Rapat Pleno Terbuka Penghitungan dan Rekapitulasi Suara Pemilihan Ketua dan Wakil Ketua Organisasi Siswa Intra Sekolah (OSIS) SMA Negeri 1 Batu Periode Masa Bakti 2026/2027 secara langsung, umum, bebas, rahasia, jujur, dan adil (LUBER JURDIL) menggunakan sistem E-Voting Digital.
+          Pada hari ini, <strong>Selasa</strong> tanggal <strong>8 September 2026</strong>, bertempat di <strong>TPS SMAN 1 Batu</strong>, telah dilaksanakan Rapat Pleno Terbuka Penghitungan dan Rekapitulasi Suara Pemilihan Ketua dan Wakil Ketua Organisasi Siswa Intra Sekolah (OSIS) SMA Negeri 1 Batu Periode Masa Bakti 2026/2027 secara langsung, umum, bebas, rahasia, jujur, dan adil (LUBER JURDIL) menggunakan sistem E-Voting Digital.
         </div>
 
         {/* TABEL 1: DATA PEMILIH & PARTISIPASI */}
