@@ -81,6 +81,25 @@ npm run build
 
 ---
 
+## ☁️ Konfigurasi Firebase Cloud Firestore
+
+Aplikasi dapat dijalankan secara instan dengan **Firebase Spark Plan (100% Gratis)**:
+
+1. Buat project baru di [Firebase Console](https://console.firebase.google.com/) dan aktifkan **Firestore Database**.
+2. Salin aturan keamanan dari berkas [`firestore.rules`](./firestore.rules) ke tab **Rules** Firestore.
+3. Buat file `.env` di direktori utama dengan variabel berikut:
+```env
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_AUTH_DOMAIN=project-anda.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=project-anda
+VITE_FIREBASE_STORAGE_BUCKET=project-anda.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789...
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef...
+```
+4. Buka menu **Admin > Pengaturan** dan klik tombol **[Unggah Data Awal ke Firestore]** untuk inisialisasi data paslon & pengaturan sekolah secara otomatis.
+
+---
+
 ## 🔐 Akun & Kredensial Bawaan (Default)
 
 | Peran (Role) | Username | Password | Keterangan |

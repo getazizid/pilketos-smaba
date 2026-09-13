@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Data Pasangan Calon (Bilik Suara & Quick Count membaca & update perolehan suara)
+    match /candidates/{candidateId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // 2. Data Pengaturan & Identitas Sekolah
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // 3. Data DPT Pemilih Siswa (Verifikasi status hasVoted & votedAt)
+    match /students/{studentId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // 4. Log Aktivitas TPS & Sistem
+    match /audit_logs/{logId} {
+      allow read, write: if true;
+    }
+  }
+}
