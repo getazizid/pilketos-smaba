@@ -20,6 +20,9 @@ export function CandidateCard({ candidate, onSelectCandidate }) {
           src={candidate.photoUrl || '/assets/paslon1.jpg'}
           alt={`Paslon ${candidate.number}`}
           className="candidate-photo"
+          style={{
+            objectPosition: candidate.number === 3 ? 'center 38%' : candidate.number === 2 ? 'center 42%' : 'center 48%'
+          }}
           loading="lazy"
         />
         <div className="candidate-photo-overlay"></div>

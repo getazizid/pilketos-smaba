@@ -251,11 +251,16 @@ export function QuickCountDisplay({ onBack }) {
               )}
 
               {/* Foto Paslon */}
-              <div style={{ height: '320px', position: 'relative', overflow: 'hidden', background: '#e2e8f0' }}>
+              <div style={{ height: '360px', position: 'relative', overflow: 'hidden', background: '#e2e8f0' }}>
                 <img
                   src={cand.photoUrl || '/assets/paslon1.jpg'}
                   alt={`Paslon ${cand.number}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 62%' }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: cand.number === 3 ? 'center 38%' : cand.number === 2 ? 'center 42%' : 'center 48%'
+                  }}
                 />
                 <div style={{
                   position: 'absolute',

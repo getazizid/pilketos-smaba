@@ -70,8 +70,8 @@ export function VoteConfirmModal({ candidate, isOpen, onClose, onConfirmVote }) 
           </div>
 
           <div style={{
-            width: '180px',
-            height: '135px',
+            width: '200px',
+            height: '150px',
             borderRadius: 'var(--radius-lg)',
             overflow: 'hidden',
             margin: '0.75rem auto 1rem',
@@ -81,7 +81,12 @@ export function VoteConfirmModal({ candidate, isOpen, onClose, onConfirmVote }) 
             <img
               src={candidate.photoUrl || '/assets/paslon1.jpg'}
               alt={`Paslon ${candidate.number}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 62%' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: candidate.number === 3 ? 'center 38%' : candidate.number === 2 ? 'center 42%' : 'center 48%'
+              }}
             />
           </div>
 
