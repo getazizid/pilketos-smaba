@@ -348,6 +348,31 @@ export function ElectionProvider({ children }) {
     addLog(`Data siswa DPT dihapus.`, 'WARNING');
   };
 
+  const deleteBulkStudents = async (studentIds) => {
+    if (!studentIds || studentIds.length === 0) return;
+
+    if (isFirebaseConfigured && db) {
+      try {
+        const chunkSize = 400;
+        for (let i = 0; i < studentIds.length; i += chunkSize) {
+          const chunk = studentIds.slice(i, i + chunkSize);
+          const batch = writeBatch(db);
+          chunk.forEach((id) => {
+            batch.delete(doc(db, 'students', id));
+          });
+          await batch.commit();
+        }
+        console.log(`[Firestore] ${studentIds.length} siswa berhasil dihapus secara massal dari cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal hapus massal siswa di Firestore:', err);
+      }
+    }
+
+    const idSet = new Set(studentIds);
+    setStudents(prev => prev.filter(s => !idSet.has(s.id)));
+    addLog(`${studentIds.length} siswa DPT terpilih telah dihapus massal.`, 'WARNING');
+  };
+
   const resetStudentVote = async (id) => {
     if (isFirebaseConfigured && db) {
       try {
@@ -525,6 +550,7 @@ export function ElectionProvider({ children }) {
         updateStudent,
         addBulkStudents,
         deleteStudent,
+        deleteBulkStudents,
         resetStudentVote,
         updateSettings,
         resetAllVotes,

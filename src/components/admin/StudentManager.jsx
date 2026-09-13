@@ -20,7 +20,15 @@ import { exportDptToCsv, parseDptCsv } from '../../utils/exportImport';
 import { Modal } from '../common/Modal';
 
 export function StudentManager({ onNavigateToPrint, onAddToast }) {
-  const { students, addStudent, updateStudent, addBulkStudents, deleteStudent, resetStudentVote } = useElection();
+  const { 
+    students, 
+    addStudent, 
+    updateStudent, 
+    addBulkStudents, 
+    deleteStudent, 
+    deleteBulkStudents, 
+    resetStudentVote 
+  } = useElection();
   const { userRole } = useAuth();
 
   const isReadOnly = userRole === 'SAKSI';
@@ -28,6 +36,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'VOTED', 'NOT_VOTED'
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Modal Add / Edit Single Student
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -184,7 +193,38 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     if (isReadOnly) return;
     if (window.confirm(`Hapus ${student.name} dari DPT?`)) {
       deleteStudent(student.id);
+      setSelectedIds(prev => prev.filter(id => id !== student.id));
       if (onAddToast) onAddToast(`Siswa ${student.name} telah dihapus dari DPT.`, 'info');
+    }
+  };
+
+  // Helper Seleksi & Hapus Terpilih Centang
+  const isAllSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedIds.includes(s.id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      const filteredIdSet = new Set(filteredStudents.map(s => s.id));
+      setSelectedIds(prev => prev.filter(id => !filteredIdSet.has(id)));
+    } else {
+      const newIds = new Set([...selectedIds, ...filteredStudents.map(s => s.id)]);
+      setSelectedIds(Array.from(newIds));
+    }
+  };
+
+  const handleToggleSelectOne = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleDeleteSelected = async () => {
+    if (isReadOnly || selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+    if (window.confirm(`PERINGATAN HAPUS MASSAL:\n\nApakah Anda yakin ingin menghapus ${count} siswa terpilih dari DPT dan database Cloud Firestore? Tindakan ini tidak dapat dibatalkan.`)) {
+      await deleteBulkStudents(selectedIds);
+      setSelectedIds([]);
+      if (onAddToast) onAddToast(`${count} siswa DPT terpilih berhasil dihapus dari sistem & cloud.`, 'warning');
     }
   };
 
@@ -314,12 +354,66 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         </div>
       </div>
 
+      {/* Action Bar Hapus Terpilih Centang */}
+      {selectedIds.length > 0 && !isReadOnly && (
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: 'var(--radius-md)',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          boxShadow: '0 2px 10px rgba(239, 68, 68, 0.08)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontWeight: '700', color: '#b91c1c', fontSize: '0.95rem' }}>
+              ✓ {selectedIds.length} Siswa Terpilih (Centang)
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={() => setSelectedIds([])}
+              style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}
+            >
+              Batalkan Centang
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.6rem' }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              onClick={handleDeleteSelected}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700' }}
+            >
+              <Trash2 size={16} />
+              <span>Hapus Terpilih ({selectedIds.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* DPT Table */}
       <div className="table-responsive">
         <table className="data-table">
           <thead>
             <tr>
-              <th>No</th>
+              {!isReadOnly && (
+                <th style={{ width: '42px', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={handleToggleSelectAll}
+                    style={{ width: '17px', height: '17px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                    title="Pilih / Batalkan Semua di Halaman Ini"
+                  />
+                </th>
+              )}
+              <th style={{ width: '50px' }}>No</th>
               <th>NISN</th>
               <th>Nama Lengkap Siswa</th>
               <th>Kelas</th>
@@ -332,13 +426,23 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           <tbody>
             {filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                <td colSpan={isReadOnly ? 7 : 9} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
                   Tidak ada data siswa DPT yang cocok dengan pencarian / filter.
                 </td>
               </tr>
             ) : (
               filteredStudents.map((s, idx) => (
-                <tr key={s.id}>
+                <tr key={s.id} style={{ background: selectedIds.includes(s.id) ? 'rgba(59, 130, 246, 0.05)' : undefined }}>
+                  {!isReadOnly && (
+                    <td style={{ textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(s.id)}
+                        onChange={() => handleToggleSelectOne(s.id)}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                      />
+                    </td>
+                  )}
                   <td>{idx + 1}</td>
                   <td>
                     <code style={{ color: 'var(--primary-light)', fontWeight: '600' }}>{s.nisn}</code>
