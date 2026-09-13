@@ -132,11 +132,11 @@ export function CandidateManager({ onAddToast }) {
         {candidates.map((cand) => (
           <div key={cand.id} className="glass-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {/* Foto Paslon */}
-            <div style={{ height: '200px', width: '100%', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ height: '260px', width: '100%', position: 'relative', overflow: 'hidden', background: '#e2e8f0' }}>
               <img
                 src={cand.photoUrl || '/assets/paslon1.jpg'}
                 alt={`Paslon ${cand.number}`}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 62%' }}
               />
               <div style={{
                 position: 'absolute',

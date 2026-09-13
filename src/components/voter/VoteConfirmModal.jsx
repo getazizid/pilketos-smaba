@@ -70,17 +70,18 @@ export function VoteConfirmModal({ candidate, isOpen, onClose, onConfirmVote }) 
           </div>
 
           <div style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '50%',
+            width: '180px',
+            height: '135px',
+            borderRadius: 'var(--radius-lg)',
             overflow: 'hidden',
             margin: '0.75rem auto 1rem',
-            border: '3px solid var(--emerald)'
+            border: '3px solid var(--emerald)',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
           }}>
             <img
               src={candidate.photoUrl || '/assets/paslon1.jpg'}
               alt={`Paslon ${candidate.number}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 62%' }}
             />
           </div>
 
