@@ -105,6 +105,7 @@ export const INITIAL_USERS = [
   {
     id: 'user-admin',
     username: 'admin',
+    password: 'osis2026',
     name: 'Super Admin Pilketos',
     role: 'ADMIN',
     tps: 'Pusat'

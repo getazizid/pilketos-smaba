@@ -23,7 +23,7 @@ export function AdminLogin({ onLoginSuccess }) {
 
     if (!matchedUser) {
       if (cleanUser === 'admin') {
-        matchedUser = { id: 'user-admin', username: 'admin', name: 'Super Admin', role: 'ADMIN' };
+        matchedUser = { id: 'user-admin', username: 'admin', name: 'Super Admin', role: 'ADMIN', password: 'osis2026' };
       }
     }
 

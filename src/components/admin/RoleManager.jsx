@@ -5,19 +5,26 @@ import {
   Shield, 
   UserCheck, 
   Eye, 
+  EyeOff,
   Trash2, 
   Key, 
   UserPlus, 
-  ShieldAlert 
+  ShieldAlert,
+  Pencil,
+  Lock,
+  User,
+  CheckCircle,
+  MapPin
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 
 export function RoleManager({ onAddToast }) {
-  const { users, addUser, deleteUser } = useElection();
-  const { userRole } = useAuth();
+  const { users, addUser, updateUser, deleteUser } = useElection();
+  const { userRole, adminUser, loginAdmin } = useAuth();
 
   const isSuperAdmin = userRole === 'ADMIN';
 
+  // Modal Tambah User
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -26,6 +33,19 @@ export function RoleManager({ onAddToast }) {
     role: 'OPERATOR',
     tps: 'TPS SMAN 1 Batu'
   });
+  const [showAddPassword, setShowAddPassword] = useState(false);
+
+  // Modal Ubah / Edit User
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    username: '',
+    password: '',
+    name: '',
+    role: 'OPERATOR',
+    tps: ''
+  });
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   // Jika bukan Super Admin, blokir akses halaman ini
   if (!isSuperAdmin) {
@@ -59,6 +79,13 @@ export function RoleManager({ onAddToast }) {
 
     const cleanUsername = formData.username.trim().toLowerCase().replace(/\s+/g, '');
 
+    // Cek duplikasi username
+    const exists = users.some(u => u.username?.toLowerCase() === cleanUsername);
+    if (exists) {
+      alert(`Username "${cleanUsername}" sudah digunakan. Silakan pilih username lain.`);
+      return;
+    }
+
     addUser({
       username: cleanUsername,
       password: formData.password.trim() || '123456',
@@ -71,9 +98,68 @@ export function RoleManager({ onAddToast }) {
     if (onAddToast) onAddToast(`Akun ${formData.name} (${formData.role}) berhasil ditambahkan.`, 'success');
   };
 
+  const handleOpenEditModal = (u) => {
+    const isPrimary = u.username === 'admin' || u.id === 'user-admin';
+    setEditingUserId(u.id);
+    setEditFormData({
+      username: u.username || '',
+      password: u.password || (isPrimary ? 'osis2026' : '123456'),
+      name: u.name || '',
+      role: u.role || 'OPERATOR',
+      tps: u.tps || ''
+    });
+    setShowEditPassword(false);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditUser = (e) => {
+    e.preventDefault();
+    if (!isSuperAdmin) {
+      alert('Hanya Super Admin yang dapat mengubah akun.');
+      return;
+    }
+
+    if (!editFormData.username.trim() || !editFormData.name.trim()) {
+      alert('Username dan Nama Lengkap wajib diisi!');
+      return;
+    }
+
+    const cleanUsername = editFormData.username.trim().toLowerCase().replace(/\s+/g, '');
+
+    // Cek duplikasi username pada akun lain
+    const isDuplicate = users.some(
+      u => u.id !== editingUserId && u.username?.toLowerCase() === cleanUsername
+    );
+    if (isDuplicate) {
+      alert(`Username "${cleanUsername}" sudah digunakan oleh akun lain. Silakan gunakan username lain.`);
+      return;
+    }
+
+    const targetUser = users.find(u => u.id === editingUserId);
+    const isPrimaryAdmin = targetUser?.username === 'admin' || targetUser?.id === 'user-admin';
+
+    const updatedData = {
+      name: editFormData.name.trim(),
+      username: cleanUsername,
+      password: editFormData.password.trim() || (isPrimaryAdmin ? 'osis2026' : '123456'),
+      role: isPrimaryAdmin ? 'ADMIN' : editFormData.role,
+      tps: editFormData.tps.trim() || (isPrimaryAdmin ? 'Pusat' : 'TPS SMAN 1 Batu')
+    };
+
+    updateUser(editingUserId, updatedData);
+
+    // Sinkronkan sesi admin aktif jika akun yang diubah adalah akun yang sedang login
+    if (adminUser && (adminUser.id === editingUserId || adminUser.username === targetUser?.username)) {
+      loginAdmin({ ...adminUser, ...updatedData });
+    }
+
+    setIsEditModalOpen(false);
+    if (onAddToast) onAddToast(`Akun ${updatedData.name} berhasil diperbarui.`, 'success');
+  };
+
   const handleDelete = (u) => {
     if (!isSuperAdmin) return;
-    if (u.username === 'admin') {
+    if (u.username === 'admin' || u.id === 'user-admin') {
       alert('Akun Super Admin utama tidak dapat dihapus.');
       return;
     }
@@ -110,6 +196,9 @@ export function RoleManager({ onAddToast }) {
     }
   };
 
+  const currentEditingUser = users.find(u => u.id === editingUserId);
+  const isEditingPrimaryAdmin = currentEditingUser?.username === 'admin' || currentEditingUser?.id === 'user-admin';
+
   return (
     <div>
       {/* Header */}
@@ -126,7 +215,7 @@ export function RoleManager({ onAddToast }) {
             Manajemen Hak Akses &amp; Akun Petugas
           </h2>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Kelola akun panitia TPS, pengawas bilik, dan saksi pemilihan
+            Kelola akun panitia TPS, pengawas bilik, saksi pemilihan, serta akun Super Admin
           </p>
         </div>
 
@@ -141,6 +230,7 @@ export function RoleManager({ onAddToast }) {
               role: 'OPERATOR',
               tps: 'TPS SMAN 1 Batu'
             });
+            setShowAddPassword(false);
             setIsAddModalOpen(true);
           }}
         >
@@ -192,42 +282,81 @@ export function RoleManager({ onAddToast }) {
               <th>Nama Lengkap Petugas</th>
               <th>Hak Akses (Role)</th>
               <th>Penugasan TPS</th>
-              <th style={{ textAlign: 'center', width: '90px' }}>Aksi</th>
+              <th style={{ textAlign: 'center', width: '150px' }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((u, idx) => (
-              <tr key={u.id}>
-                <td>{idx + 1}</td>
-                <td>
-                  <code style={{ fontWeight: '700', color: 'var(--primary-light)' }}>{u.username}</code>
-                </td>
-                <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{u.name}</td>
-                <td>
-                  {getRoleBadge(u.role)}
-                </td>
-                <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  {u.tps || 'Pusat'}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                    {u.username !== 'admin' ? (
+            {users.map((u, idx) => {
+              const isPrimary = u.username === 'admin' || u.id === 'user-admin';
+              return (
+                <tr key={u.id}>
+                  <td>{idx + 1}</td>
+                  <td>
+                    <code style={{ fontWeight: '700', color: 'var(--primary-light)' }}>{u.username}</code>
+                  </td>
+                  <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>{u.name}</span>
+                      {isPrimary && (
+                        <span 
+                          className="badge badge-purple" 
+                          style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', fontWeight: '700' }}
+                          title="Akun Super Admin Utama Sistem"
+                        >
+                          Akun Utama
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    {getRoleBadge(u.role)}
+                  </td>
+                  <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {u.tps || 'Pusat'}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', alignItems: 'center' }}>
                       <button
                         type="button"
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(u)}
-                        title="Hapus Akun"
-                        style={{ padding: '0.35rem 0.6rem' }}
+                        className="btn btn-sm btn-outline"
+                        onClick={() => handleOpenEditModal(u)}
+                        title={`Ubah data akun ${u.name}`}
+                        style={{ padding: '0.35rem 0.65rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                       >
-                        <Trash2 size={14} />
+                        <Pencil size={13} />
+                        <span style={{ fontSize: '0.8rem' }}>Ubah</span>
                       </button>
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Akun Utama</span>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+
+                      {!isPrimary ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger"
+                          onClick={() => handleDelete(u)}
+                          title="Hapus Akun"
+                          style={{ padding: '0.35rem 0.6rem' }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      ) : (
+                        <span 
+                          style={{ 
+                            fontSize: '0.72rem', 
+                            color: 'var(--text-muted)', 
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: 'var(--radius-sm)',
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px dashed var(--border-subtle)'
+                          }}
+                          title="Akun Super Admin utama tidak dapat dihapus demi keamanan"
+                        >
+                          Terkunci
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -265,14 +394,37 @@ export function RoleManager({ onAddToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Kata Sandi / Password (Opsional)</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Default: 123456"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
+            <label className="form-label">Kata Sandi / Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showAddPassword ? 'text' : 'password'}
+                className="form-input"
+                style={{ paddingRight: '2.5rem' }}
+                placeholder="Default: 123456"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowAddPassword(!showAddPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                title={showAddPassword ? 'Sembunyikan Kata Sandi' : 'Lihat Kata Sandi'}
+              >
+                {showAddPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
               Bila dikosongkan, kata sandi bawaan adalah <code>123456</code>.
             </span>
@@ -312,6 +464,145 @@ export function RoleManager({ onAddToast }) {
           </div>
         </form>
       </Modal>
+
+      {/* Modal Ubah / Edit User */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title={currentEditingUser ? `Ubah Data Akun: ${currentEditingUser.name}` : 'Ubah Akun Petugas'}
+        maxWidth="520px"
+      >
+        <form onSubmit={handleEditUser}>
+          {isEditingPrimaryAdmin && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.85rem 1rem',
+              background: 'rgba(124, 58, 237, 0.12)',
+              border: '1px solid rgba(124, 58, 237, 0.35)',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1.25rem',
+              color: '#ddd6fe',
+              fontSize: '0.85rem',
+              lineHeight: '1.5'
+            }}>
+              <Shield size={22} color="#a78bfa" style={{ flexShrink: 0 }} />
+              <div>
+                <strong>Akun Super Admin Utama:</strong> Anda dapat mengubah Nama Lengkap, Username Login, Kata Sandi, dan Penugasan TPS. Peran akun ini terkunci sebagai Super Admin demi memastikan sistem selalu dapat diakses.
+              </div>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Nama Lengkap Petugas</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Contoh: Super Admin Pilketos / Nama Staf"
+              value={editFormData.name}
+              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Username Login (Huruf kecil tanpa spasi)</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Contoh: admin"
+              value={editFormData.username}
+              onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Kata Sandi / Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showEditPassword ? 'text' : 'password'}
+                className="form-input"
+                style={{ paddingRight: '2.5rem' }}
+                placeholder="Masukkan kata sandi baru"
+                value={editFormData.password}
+                onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowEditPassword(!showEditPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                title={showEditPassword ? 'Sembunyikan Kata Sandi' : 'Lihat Kata Sandi'}
+              >
+                {showEditPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+              Klik ikon mata untuk melihat kata sandi yang sedang aktif atau ubah sesuai kebutuhan.
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Tingkat Akses (Role)</label>
+            {isEditingPrimaryAdmin ? (
+              <div>
+                <input
+                  type="text"
+                  className="form-input"
+                  value="Super Admin (Akses Penuh Sistem - Terkunci)"
+                  disabled
+                  style={{ opacity: 0.7, cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.05)' }}
+                />
+              </div>
+            ) : (
+              <select
+                className="form-select"
+                value={editFormData.role}
+                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+              >
+                <option value="OPERATOR">Operator TPS (Verifikasi DPT &amp; Cetak Kartu)</option>
+                <option value="SAKSI">Saksi Paslon (Mode Pantau Suara &amp; Berita Acara)</option>
+                <option value="ADMIN">Super Admin (Akses Penuh Sistem)</option>
+              </select>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Lokasi TPS / Penugasan</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Contoh: Pusat / TPS SMAN 1 Batu"
+              value={editFormData.tps}
+              onChange={(e) => setEditFormData({ ...editFormData, tps: e.target.value })}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+            <button type="button" className="btn btn-outline" onClick={() => setIsEditModalOpen(false)}>
+              Batal
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Simpan Perubahan
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
+

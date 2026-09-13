@@ -68,7 +68,12 @@ export function ElectionProvider({ children }) {
       const saved = localStorage.getItem('pilketos_users_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(u => ({
+            password: u.username === 'admin' ? 'osis2026' : '123456',
+            ...u
+          }));
+        }
       }
       return INITIAL_USERS;
     } catch {
@@ -546,8 +551,12 @@ export function ElectionProvider({ children }) {
         console.error('[Firestore] Gagal update user di Firestore:', err);
       }
     }
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updatedFields } : u));
-    addLog(`Data akun staf diperbarui.`, 'INFO');
+    setUsers(prev => {
+      const updated = prev.map(u => (u.id === id || u.username === id) ? { ...u, ...updatedFields } : u);
+      localStorage.setItem('pilketos_users_v3', JSON.stringify(updated));
+      return updated;
+    });
+    addLog(`Data akun staf (${updatedFields.name || id}) diperbarui.`, 'INFO');
   };
 
   const deleteUser = async (id) => {
