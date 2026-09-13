@@ -14,6 +14,7 @@ import {
   increment, 
   setDoc, 
   deleteDoc,
+  writeBatch,
   serverTimestamp 
 } from 'firebase/firestore';
 
@@ -240,13 +241,31 @@ export function ElectionProvider({ children }) {
     addLog(`Siswa DPT baru ditambahkan: ${fullData.name} (${fullData.nisn}).`, 'INFO');
   };
 
-  const addBulkStudents = (bulkList) => {
+  const addBulkStudents = async (bulkList) => {
     const formatted = bulkList.map((s, idx) => ({
       ...s,
       id: s.id || `std-bulk-${Date.now()}-${idx}`,
       hasVoted: false,
       votedAt: null
     }));
+
+    if (isFirebaseConfigured && db) {
+      try {
+        const chunkSize = 400;
+        for (let i = 0; i < formatted.length; i += chunkSize) {
+          const chunk = formatted.slice(i, i + chunkSize);
+          const batch = writeBatch(db);
+          chunk.forEach((student) => {
+            const docRef = doc(db, 'students', student.id);
+            batch.set(docRef, student);
+          });
+          await batch.commit();
+        }
+      } catch (err) {
+        console.error('Gagal menyimpan batch siswa ke Firestore:', err);
+      }
+    }
+
     setStudents(prev => [...formatted, ...prev]);
     addLog(`Berhasil mengimpor ${formatted.length} siswa DPT.`, 'SUCCESS');
   };
@@ -259,7 +278,17 @@ export function ElectionProvider({ children }) {
     addLog(`Data siswa DPT dihapus.`, 'WARNING');
   };
 
-  const resetStudentVote = (id) => {
+  const resetStudentVote = async (id) => {
+    if (isFirebaseConfigured && db) {
+      try {
+        await updateDoc(doc(db, 'students', id), {
+          hasVoted: false,
+          votedAt: null
+        });
+      } catch (err) {
+        console.error('Gagal reset vote siswa di Firestore:', err);
+      }
+    }
     setStudents(prev => prev.map(s => s.id === id ? { ...s, hasVoted: false, votedAt: null } : s));
     addLog(`Hak pilih siswa di-reset oleh Admin.`, 'WARNING');
   };
@@ -275,10 +304,73 @@ export function ElectionProvider({ children }) {
   };
 
   // Reset Semua Suara (Darurat/Simulasi Baru)
-  const resetAllVotes = () => {
+  const resetAllVotes = async () => {
+    if (isFirebaseConfigured && db) {
+      try {
+        // Reset candidates
+        const candBatch = writeBatch(db);
+        candidates.forEach((c) => {
+          candBatch.update(doc(db, 'candidates', c.id), { voteCount: 0 });
+        });
+        await candBatch.commit();
+
+        // Reset students yang sudah memilih
+        const votedStudents = students.filter(s => s.hasVoted);
+        const chunkSize = 400;
+        for (let i = 0; i < votedStudents.length; i += chunkSize) {
+          const chunk = votedStudents.slice(i, i + chunkSize);
+          const batch = writeBatch(db);
+          chunk.forEach((s) => {
+            batch.update(doc(db, 'students', s.id), {
+              hasVoted: false,
+              votedAt: null
+            });
+          });
+          await batch.commit();
+        }
+      } catch (err) {
+        console.error('Gagal reset suara di Firestore:', err);
+      }
+    }
+
     setCandidates(prev => prev.map(c => ({ ...c, voteCount: 0 })));
     setStudents(prev => prev.map(s => ({ ...s, hasVoted: false, votedAt: null })));
     addLog('Semua perolehan suara dan status pemilih telah di-reset ke angka 0.', 'DANGER');
+  };
+
+  // Inisialisasi / Upload Data Awal ke Firestore jika baru dibuat
+  const seedInitialDataToFirestore = async () => {
+    if (!isFirebaseConfigured || !db) {
+      return { success: false, message: 'Firebase belum terhubung' };
+    }
+    try {
+      // 1. Upload settings
+      await setDoc(doc(db, 'settings', 'main'), settings);
+
+      // 2. Upload candidates
+      const candBatch = writeBatch(db);
+      candidates.forEach((c) => {
+        candBatch.set(doc(db, 'candidates', c.id), c);
+      });
+      await candBatch.commit();
+
+      // 3. Upload students
+      const chunkSize = 400;
+      for (let i = 0; i < students.length; i += chunkSize) {
+        const chunk = students.slice(i, i + chunkSize);
+        const batch = writeBatch(db);
+        chunk.forEach((s) => {
+          batch.set(doc(db, 'students', s.id), s);
+        });
+        await batch.commit();
+      }
+
+      addLog('Data bawaan (Paslon, Pengaturan, DPT) berhasil diunggah ke Firestore Cloud.', 'SUCCESS');
+      return { success: true };
+    } catch (err) {
+      console.error('Gagal unggah data ke Firestore:', err);
+      return { success: false, error: err.message };
+    }
   };
 
   // Manajemen Hak Akses / Users
@@ -323,7 +415,8 @@ export function ElectionProvider({ children }) {
         resetAllVotes,
         addUser,
         deleteUser,
-        addLog
+        addLog,
+        seedInitialDataToFirestore
       }}
     >
       {children}

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
 import { isFirebaseConfigured, activeConfig, saveFirebaseCustomConfig } from '../../config/firebase';
-import { Settings, ShieldAlert, Check, Database, Clock, Building, AlertTriangle, Lock, KeyRound, Smartphone, ShieldCheck } from 'lucide-react';
+import { Settings, ShieldAlert, Check, Database, Clock, Building, AlertTriangle, Lock, KeyRound, Smartphone, ShieldCheck, Upload } from 'lucide-react';
 
 export function ElectionSettings({ onAddToast }) {
-  const { settings, updateSettings, resetAllVotes } = useElection();
+  const { settings, updateSettings, resetAllVotes, seedInitialDataToFirestore } = useElection();
   const { userRole } = useAuth();
 
   const isSuperAdmin = userRole === 'ADMIN';
@@ -55,6 +55,22 @@ export function ElectionSettings({ onAddToast }) {
     if (!isSuperAdmin) return;
     saveFirebaseCustomConfig(firebaseForm);
     if (onAddToast) onAddToast('Konfigurasi Firebase diperbarui. Memuat ulang aplikasi...', 'info');
+  };
+
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  const handleSeedFirestore = async () => {
+    if (!window.confirm('Unggah seluruh data bawaan (Paslon, Pengaturan Sekolah, dan DPT saat ini) ke Cloud Firestore?')) {
+      return;
+    }
+    setIsSeeding(true);
+    const res = await seedInitialDataToFirestore();
+    setIsSeeding(false);
+    if (res.success) {
+      if (onAddToast) onAddToast('Data awal berhasil diunggah ke Firestore Cloud!', 'success');
+    } else {
+      alert('Gagal mengunggah data: ' + (res.error || res.message));
+    }
   };
 
   const handleResetToDemo = () => {
@@ -485,6 +501,40 @@ export function ElectionSettings({ onAddToast }) {
             </div>
           )}
         </form>
+
+        {isFirebaseConfigured && isSuperAdmin && (
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '1.25rem',
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div>
+              <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Check size={18} color="#16a34a" />
+                <span>Inisialisasi Database Baru (Upload Data Awal)</span>
+              </div>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: '#15803d', lineHeight: '1.4' }}>
+                Jika project Firebase baru Anda masih kosong, klik tombol ini untuk mengunggah Pasangan Calon, Pengaturan, dan DPT bawaan ke Cloud Firestore.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-emerald"
+              disabled={isSeeding}
+              onClick={handleSeedFirestore}
+            >
+              <Upload size={16} />
+              <span>{isSeeding ? 'Mengunggah ke Cloud...' : 'Unggah Data Awal ke Firestore'}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Danger Zone: Reset Perolehan Suara */}
