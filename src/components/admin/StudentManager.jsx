@@ -12,14 +12,15 @@ import {
   PlusCircle, 
   Filter, 
   CheckCircle2, 
-  XCircle 
+  XCircle,
+  Edit2
 } from 'lucide-react';
 import { generateVoterToken } from '../../utils/tokenGenerator';
 import { exportDptToCsv, parseDptCsv } from '../../utils/exportImport';
 import { Modal } from '../common/Modal';
 
 export function StudentManager({ onNavigateToPrint, onAddToast }) {
-  const { students, addStudent, addBulkStudents, deleteStudent, resetStudentVote } = useElection();
+  const { students, addStudent, updateStudent, addBulkStudents, deleteStudent, resetStudentVote } = useElection();
   const { userRole } = useAuth();
 
   const isReadOnly = userRole === 'SAKSI';
@@ -28,8 +29,9 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const [filterClass, setFilterClass] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'VOTED', 'NOT_VOTED'
 
-  // Modal Add Single Student
+  // Modal Add / Edit Single Student
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
   const [formData, setFormData] = useState({
     nisn: '',
     name: '',
@@ -64,6 +66,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   }, [students, searchTerm, filterClass, filterStatus]);
 
   const openAddModal = () => {
+    setEditingStudent(null);
     setFormData({
       nisn: '00' + Math.floor(10000000 + Math.random() * 90000000),
       name: '',
@@ -74,7 +77,19 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     setIsAddModalOpen(true);
   };
 
-  const handleAddSingle = (e) => {
+  const openEditModal = (student) => {
+    setEditingStudent(student);
+    setFormData({
+      nisn: student.nisn || '',
+      name: student.name || '',
+      class: student.class || 'X-1',
+      gender: student.gender || 'L',
+      token: student.token || generateVoterToken()
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveSingle = (e) => {
     e.preventDefault();
     if (isReadOnly) return;
 
@@ -83,15 +98,24 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
       return;
     }
 
-    addStudent({
-      ...formData,
+    const payload = {
       name: formData.name.trim(),
       nisn: formData.nisn.trim(),
+      class: formData.class.trim(),
+      gender: formData.gender,
       token: formData.token.trim().toUpperCase() || generateVoterToken()
-    });
+    };
+
+    if (editingStudent) {
+      updateStudent(editingStudent.id, payload);
+      if (onAddToast) onAddToast(`Data siswa ${formData.name} berhasil diperbarui di Firestore.`, 'success');
+    } else {
+      addStudent(payload);
+      if (onAddToast) onAddToast(`Siswa ${formData.name} berhasil ditambahkan ke DPT di Firestore.`, 'success');
+    }
 
     setIsAddModalOpen(false);
-    if (onAddToast) onAddToast(`Siswa ${formData.name} berhasil ditambahkan ke DPT.`, 'success');
+    setEditingStudent(null);
   };
 
   // Quick Bulk Generator (misal generate 15 siswa otomatis untuk simulasi kelas)
@@ -368,6 +392,15 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                         )}
                         <button
                           type="button"
+                          className="btn btn-sm btn-outline"
+                          onClick={() => openEditModal(s)}
+                          title="Edit Data Siswa"
+                          style={{ padding: '0.35rem 0.6rem' }}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          type="button"
                           className="btn btn-sm btn-danger"
                           onClick={() => handleDelete(s)}
                           title="Hapus dari DPT"
@@ -385,14 +418,17 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         </table>
       </div>
 
-      {/* Modal Add Single Student */}
+      {/* Modal Add / Edit Single Student */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title="Tambah Siswa Baru ke DPT"
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingStudent(null);
+        }}
+        title={editingStudent ? `Edit Data Siswa: ${editingStudent.name}` : "Tambah Siswa Baru ke DPT"}
         maxWidth="500px"
       >
-        <form onSubmit={handleAddSingle}>
+        <form onSubmit={handleSaveSingle}>
           <div className="form-group">
             <label className="form-label">NISN (10 Digit)</label>
             <input
@@ -468,7 +504,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
               Batal
             </button>
             <button type="submit" className="btn btn-primary">
-              Simpan ke DPT
+              {editingStudent ? 'Simpan Perubahan Siswa' : 'Simpan ke DPT'}
             </button>
           </div>
         </form>

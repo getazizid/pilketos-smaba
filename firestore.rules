@@ -24,5 +24,10 @@ service cloud.firestore {
     match /audit_logs/{logId} {
       allow read, write: if true;
     }
+
+    // 5. Akun & Hak Akses Staf
+    match /users/{userId} {
+      allow read, write: if true;
+    }
   }
 }

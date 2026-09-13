@@ -119,7 +119,7 @@ export function ElectionProvider({ children }) {
   useEffect(() => {
     if (!isFirebaseConfigured || !db) return;
 
-    // Listen to Candidates
+    // 1. Listen to Candidates
     const unsubCandidates = onSnapshot(collection(db, 'candidates'), (snapshot) => {
       if (!snapshot.empty) {
         const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -127,14 +127,14 @@ export function ElectionProvider({ children }) {
       }
     }, (err) => console.warn('Firestore candidates listener:', err));
 
-    // Listen to Settings
+    // 2. Listen to Settings
     const unsubSettings = onSnapshot(doc(db, 'settings', 'main'), (docSnap) => {
       if (docSnap.exists()) {
         setSettings(docSnap.data());
       }
     }, (err) => console.warn('Firestore settings listener:', err));
 
-    // Listen to Students
+    // 3. Listen to Students
     const unsubStudents = onSnapshot(collection(db, 'students'), (snapshot) => {
       if (!snapshot.empty) {
         const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -142,21 +142,48 @@ export function ElectionProvider({ children }) {
       }
     }, (err) => console.warn('Firestore students listener:', err));
 
+    // 4. Listen to Users (Staff/Operators)
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      if (!snapshot.empty) {
+        const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        setUsers(loaded);
+      }
+    }, (err) => console.warn('Firestore users listener:', err));
+
+    // 5. Listen to Audit Logs
+    const unsubLogs = onSnapshot(collection(db, 'audit_logs'), (snapshot) => {
+      if (!snapshot.empty) {
+        const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        setAuditLogs(loaded.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 100));
+      }
+    }, (err) => console.warn('Firestore audit_logs listener:', err));
+
     return () => {
       unsubCandidates();
       unsubSettings();
       unsubStudents();
+      unsubUsers();
+      unsubLogs();
     };
   }, []);
 
   // Helper untuk menambah log
-  const addLog = (message, type = 'INFO') => {
+  const addLog = async (message, type = 'INFO') => {
     const newLog = {
       id: 'log-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
       timestamp: new Date().toISOString(),
       message,
       type
     };
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'audit_logs', newLog.id), newLog, { merge: true });
+      } catch (err) {
+        console.warn('Gagal simpan audit log ke Firestore:', err);
+      }
+    }
+
     setAuditLogs(prev => [newLog, ...prev.slice(0, 99)]);
   };
 
@@ -203,19 +230,33 @@ export function ElectionProvider({ children }) {
 
   // Manajemen Kandidat
   const addCandidate = async (newCandidate) => {
-    const id = 'paslon-' + Date.now();
-    const candidateData = { ...newCandidate, id, voteCount: 0 };
+    const id = newCandidate.id || 'paslon-' + (newCandidate.number || Date.now());
+    const candidateData = { ...newCandidate, id, voteCount: Number(newCandidate.voteCount) || 0 };
 
     if (isFirebaseConfigured && db) {
-      await setDoc(doc(db, 'candidates', id), candidateData);
+      try {
+        await setDoc(doc(db, 'candidates', id), candidateData, { merge: true });
+        console.log(`[Firestore] Paslon ${id} berhasil ditambahkan ke cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal tambah paslon di Firestore:', err);
+      }
     }
-    setCandidates(prev => [...prev, candidateData]);
+    setCandidates(prev => {
+      const exists = prev.some(c => c.id === id);
+      if (exists) return prev.map(c => c.id === id ? candidateData : c);
+      return [...prev, candidateData];
+    });
     addLog(`Pasangan Calon No. ${candidateData.number} (${candidateData.chairmanName} & ${candidateData.viceChairmanName}) ditambahkan.`, 'INFO');
   };
 
   const updateCandidate = async (id, updatedFields) => {
     if (isFirebaseConfigured && db) {
-      await updateDoc(doc(db, 'candidates', id), updatedFields);
+      try {
+        await setDoc(doc(db, 'candidates', id), updatedFields, { merge: true });
+        console.log(`[Firestore] Paslon ${id} berhasil diperbarui di cloud:`, updatedFields);
+      } catch (err) {
+        console.error('[Firestore] Gagal update paslon di Firestore:', err);
+      }
     }
     setCandidates(prev => prev.map(c => c.id === id ? { ...c, ...updatedFields } : c));
     addLog(`Data Paslon berhasil diperbarui.`, 'INFO');
@@ -223,7 +264,12 @@ export function ElectionProvider({ children }) {
 
   const deleteCandidate = async (id) => {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, 'candidates', id));
+      try {
+        await deleteDoc(doc(db, 'candidates', id));
+        console.log(`[Firestore] Paslon ${id} berhasil dihapus dari cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal hapus paslon di Firestore:', err);
+      }
     }
     setCandidates(prev => prev.filter(c => c.id !== id));
     addLog(`Pasangan Calon telah dihapus dari sistem.`, 'WARNING');
@@ -231,14 +277,32 @@ export function ElectionProvider({ children }) {
 
   // Manajemen Siswa (DPT)
   const addStudent = async (studentData) => {
-    const id = 'std-' + Date.now();
+    const id = studentData.id || 'std-' + Date.now();
     const fullData = { ...studentData, id, hasVoted: false, votedAt: null };
 
     if (isFirebaseConfigured && db) {
-      await setDoc(doc(db, 'students', id), fullData);
+      try {
+        await setDoc(doc(db, 'students', id), fullData, { merge: true });
+        console.log(`[Firestore] Siswa ${id} berhasil disimpan ke cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal simpan siswa di Firestore:', err);
+      }
     }
     setStudents(prev => [fullData, ...prev]);
     addLog(`Siswa DPT baru ditambahkan: ${fullData.name} (${fullData.nisn}).`, 'INFO');
+  };
+
+  const updateStudent = async (id, updatedFields) => {
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'students', id), updatedFields, { merge: true });
+        console.log(`[Firestore] Siswa ${id} berhasil diupdate di cloud:`, updatedFields);
+      } catch (err) {
+        console.error('[Firestore] Gagal update siswa di Firestore:', err);
+      }
+    }
+    setStudents(prev => prev.map(s => s.id === id ? { ...s, ...updatedFields } : s));
+    addLog(`Data pemilih diperbarui.`, 'INFO');
   };
 
   const addBulkStudents = async (bulkList) => {
@@ -257,12 +321,13 @@ export function ElectionProvider({ children }) {
           const batch = writeBatch(db);
           chunk.forEach((student) => {
             const docRef = doc(db, 'students', student.id);
-            batch.set(docRef, student);
+            batch.set(docRef, student, { merge: true });
           });
           await batch.commit();
         }
+        console.log(`[Firestore] ${formatted.length} siswa DPT berhasil disimpan massal ke cloud.`);
       } catch (err) {
-        console.error('Gagal menyimpan batch siswa ke Firestore:', err);
+        console.error('[Firestore] Gagal menyimpan batch siswa ke Firestore:', err);
       }
     }
 
@@ -272,7 +337,12 @@ export function ElectionProvider({ children }) {
 
   const deleteStudent = async (id) => {
     if (isFirebaseConfigured && db) {
-      await deleteDoc(doc(db, 'students', id));
+      try {
+        await deleteDoc(doc(db, 'students', id));
+        console.log(`[Firestore] Siswa ${id} dihapus dari cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal hapus siswa di Firestore:', err);
+      }
     }
     setStudents(prev => prev.filter(s => s.id !== id));
     addLog(`Data siswa DPT dihapus.`, 'WARNING');
@@ -281,12 +351,13 @@ export function ElectionProvider({ children }) {
   const resetStudentVote = async (id) => {
     if (isFirebaseConfigured && db) {
       try {
-        await updateDoc(doc(db, 'students', id), {
+        await setDoc(doc(db, 'students', id), {
           hasVoted: false,
           votedAt: null
-        });
+        }, { merge: true });
+        console.log(`[Firestore] Status suara siswa ${id} di-reset di cloud.`);
       } catch (err) {
-        console.error('Gagal reset vote siswa di Firestore:', err);
+        console.error('[Firestore] Gagal reset vote siswa di Firestore:', err);
       }
     }
     setStudents(prev => prev.map(s => s.id === id ? { ...s, hasVoted: false, votedAt: null } : s));
@@ -297,7 +368,12 @@ export function ElectionProvider({ children }) {
   const updateSettings = async (newSettings) => {
     const merged = { ...settings, ...newSettings };
     if (isFirebaseConfigured && db) {
-      await setDoc(doc(db, 'settings', 'main'), merged);
+      try {
+        await setDoc(doc(db, 'settings', 'main'), merged, { merge: true });
+        console.log(`[Firestore] Pengaturan pemilu berhasil disimpan ke cloud:`, merged);
+      } catch (err) {
+        console.error('[Firestore] Gagal simpan settings ke Firestore:', err);
+      }
     }
     setSettings(merged);
     addLog(`Pengaturan pemilihan diperbarui (Status: ${merged.status}).`, 'INFO');
@@ -328,8 +404,9 @@ export function ElectionProvider({ children }) {
           });
           await batch.commit();
         }
+        console.log('[Firestore] Seluruh perolehan suara berhasil di-reset ke 0 di cloud.');
       } catch (err) {
-        console.error('Gagal reset suara di Firestore:', err);
+        console.error('[Firestore] Gagal reset suara di Firestore:', err);
       }
     }
 
@@ -345,27 +422,34 @@ export function ElectionProvider({ children }) {
     }
     try {
       // 1. Upload settings
-      await setDoc(doc(db, 'settings', 'main'), settings);
+      await setDoc(doc(db, 'settings', 'main'), settings, { merge: true });
 
       // 2. Upload candidates
       const candBatch = writeBatch(db);
       candidates.forEach((c) => {
-        candBatch.set(doc(db, 'candidates', c.id), c);
+        candBatch.set(doc(db, 'candidates', c.id), c, { merge: true });
       });
       await candBatch.commit();
 
-      // 3. Upload students
+      // 3. Upload users
+      const userBatch = writeBatch(db);
+      users.forEach((u) => {
+        userBatch.set(doc(db, 'users', u.id), u, { merge: true });
+      });
+      await userBatch.commit();
+
+      // 4. Upload students
       const chunkSize = 400;
       for (let i = 0; i < students.length; i += chunkSize) {
         const chunk = students.slice(i, i + chunkSize);
         const batch = writeBatch(db);
         chunk.forEach((s) => {
-          batch.set(doc(db, 'students', s.id), s);
+          batch.set(doc(db, 'students', s.id), s, { merge: true });
         });
         await batch.commit();
       }
 
-      addLog('Data bawaan (Paslon, Pengaturan, DPT) berhasil diunggah ke Firestore Cloud.', 'SUCCESS');
+      addLog('Data bawaan (Paslon, Pengaturan, Akun, DPT) berhasil diunggah ke Firestore Cloud.', 'SUCCESS');
       return { success: true };
     } catch (err) {
       console.error('Gagal unggah data ke Firestore:', err);
@@ -374,13 +458,43 @@ export function ElectionProvider({ children }) {
   };
 
   // Manajemen Hak Akses / Users
-  const addUser = (userData) => {
-    const id = 'user-' + Date.now();
-    setUsers(prev => [...prev, { ...userData, id }]);
+  const addUser = async (userData) => {
+    const id = userData.id || 'user-' + Date.now();
+    const newUser = { ...userData, id };
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'users', id), newUser, { merge: true });
+        console.log(`[Firestore] User ${id} berhasil ditambah di cloud:`, newUser);
+      } catch (err) {
+        console.error('[Firestore] Gagal tambah user di Firestore:', err);
+      }
+    }
+    setUsers(prev => [...prev, newUser]);
     addLog(`Akun baru (${userData.username} - ${userData.role}) ditambahkan.`, 'INFO');
   };
 
-  const deleteUser = (id) => {
+  const updateUser = async (id, updatedFields) => {
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'users', id), updatedFields, { merge: true });
+        console.log(`[Firestore] User ${id} berhasil diupdate di cloud:`, updatedFields);
+      } catch (err) {
+        console.error('[Firestore] Gagal update user di Firestore:', err);
+      }
+    }
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updatedFields } : u));
+    addLog(`Data akun staf diperbarui.`, 'INFO');
+  };
+
+  const deleteUser = async (id) => {
+    if (isFirebaseConfigured && db) {
+      try {
+        await deleteDoc(doc(db, 'users', id));
+        console.log(`[Firestore] User ${id} berhasil dihapus di cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal hapus user di Firestore:', err);
+      }
+    }
     setUsers(prev => prev.filter(u => u.id !== id));
     addLog(`Akun staf dihapus.`, 'WARNING');
   };
@@ -408,12 +522,14 @@ export function ElectionProvider({ children }) {
         updateCandidate,
         deleteCandidate,
         addStudent,
+        updateStudent,
         addBulkStudents,
         deleteStudent,
         resetStudentVote,
         updateSettings,
         resetAllVotes,
         addUser,
+        updateUser,
         deleteUser,
         addLog,
         seedInitialDataToFirestore
