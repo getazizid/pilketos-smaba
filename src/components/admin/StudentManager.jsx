@@ -13,7 +13,10 @@ import {
   Filter, 
   CheckCircle2, 
   XCircle,
-  Edit2
+  Edit2,
+  GraduationCap,
+  Briefcase,
+  Users
 } from 'lucide-react';
 import { generateVoterToken } from '../../utils/tokenGenerator';
 import { exportDptToCsv, parseDptCsv } from '../../utils/exportImport';
@@ -28,7 +31,11 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     deleteStudent, 
     deleteBulkStudents, 
     deleteAllStudents,
-    resetStudentVote 
+    resetStudentVote,
+    dptBreakdown,
+    totalSiswa,
+    totalGuru,
+    totalTendik
   } = useElection();
   const { userRole } = useAuth();
 
@@ -36,14 +43,16 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const isReadOnly = userRole === 'SAKSI';
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('ALL'); // 'ALL', 'SISWA', 'GURU', 'TENDIK'
   const [filterClass, setFilterClass] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'VOTED', 'NOT_VOTED'
   const [selectedIds, setSelectedIds] = useState([]);
 
-  // Modal Add / Edit Single Student
+  // Modal Add / Edit Single Voter
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
   const [formData, setFormData] = useState({
+    voterType: 'SISWA',
     nisn: '',
     name: '',
     class: 'X-1',
@@ -55,33 +64,39 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
       const matchSearch =
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.nisn.includes(searchTerm) ||
+        (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.nisn || '').includes(searchTerm) ||
+        (s.class || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (s.token && s.token.toLowerCase().includes(searchTerm.toLowerCase()));
 
+      const sCategory = s.voterType || 'SISWA';
+      const matchCategory = filterCategory === 'ALL' || sCategory === filterCategory;
+
       let matchClass = true;
-      if (filterClass === 'X') {
-        matchClass = s.class.startsWith('X-') || s.class === 'X';
-      } else if (filterClass === 'XI') {
-        matchClass = s.class.startsWith('XI-') || s.class === 'XI';
-      } else if (filterClass === 'XII') {
-        matchClass = s.class.startsWith('XII-') || s.class === 'XII';
+      if (filterClass !== 'ALL') {
+        if (filterClass === 'X') matchClass = (s.class || '').startsWith('X-') || s.class === 'X';
+        else if (filterClass === 'XI') matchClass = (s.class || '').startsWith('XI-') || s.class === 'XI';
+        else if (filterClass === 'XII') matchClass = (s.class || '').startsWith('XII-') || s.class === 'XII';
       }
 
       let matchStatus = true;
       if (filterStatus === 'VOTED') matchStatus = s.hasVoted === true;
       if (filterStatus === 'NOT_VOTED') matchStatus = s.hasVoted === false;
 
-      return matchSearch && matchClass && matchStatus;
+      return matchSearch && matchCategory && matchClass && matchStatus;
     });
-  }, [students, searchTerm, filterClass, filterStatus]);
+  }, [students, searchTerm, filterCategory, filterClass, filterStatus]);
 
-  const openAddModal = () => {
+  const openAddModal = (defaultType = 'SISWA') => {
     setEditingStudent(null);
+    const isSiswa = defaultType === 'SISWA';
     setFormData({
-      nisn: '00' + Math.floor(10000000 + Math.random() * 90000000),
+      voterType: defaultType,
+      nisn: isSiswa 
+        ? '00' + Math.floor(10000000 + Math.random() * 90000000)
+        : '19' + Math.floor(75000000 + Math.random() * 20000000) + '20' + Math.floor(10 + Math.random() * 89) + '01' + Math.floor(1000 + Math.random() * 8999),
       name: '',
-      class: 'X-1',
+      class: isSiswa ? 'X-1' : defaultType === 'GURU' ? 'Guru Mata Pelajaran' : 'Staf Tata Usaha',
       gender: 'L',
       token: generateVoterToken()
     });
@@ -91,6 +106,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const openEditModal = (student) => {
     setEditingStudent(student);
     setFormData({
+      voterType: student.voterType || 'SISWA',
       nisn: student.nisn || '',
       name: student.name || '',
       class: student.class || 'X-1',
@@ -105,11 +121,12 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     if (isReadOnly) return;
 
     if (!formData.name.trim() || !formData.nisn.trim()) {
-      alert('Nama dan NISN wajib diisi!');
+      alert('Nama dan Nomor Identitas (NISN/NIP) wajib diisi!');
       return;
     }
 
     const payload = {
+      voterType: formData.voterType || 'SISWA',
       name: formData.name.trim(),
       nisn: formData.nisn.trim(),
       class: formData.class.trim(),
@@ -119,38 +136,51 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
 
     if (editingStudent) {
       updateStudent(editingStudent.id, payload);
-      if (onAddToast) onAddToast(`Data siswa ${formData.name} berhasil diperbarui di Firestore.`, 'success');
+      if (onAddToast) onAddToast(`Data pemilih ${formData.name} berhasil diperbarui di Firestore.`, 'success');
     } else {
       addStudent(payload);
-      if (onAddToast) onAddToast(`Siswa ${formData.name} berhasil ditambahkan ke DPT di Firestore.`, 'success');
+      if (onAddToast) onAddToast(`Pemilih ${formData.name} (${payload.voterType}) berhasil ditambahkan ke DPT.`, 'success');
     }
 
     setIsAddModalOpen(false);
     setEditingStudent(null);
   };
 
-  // Quick Bulk Generator (misal generate 15 siswa otomatis untuk simulasi kelas)
+  // Quick Bulk Generator simulasi (10 Siswa, 3 Guru, 2 Tendik)
   const handleGenerateSampleStudents = () => {
     if (isReadOnly) return;
-    const sampleNames = [
-      'Alifia Rahmadani', 'Bima Sakti Kusuma', 'Citra Kirana', 'Danang Wicaksono',
-      'Elsa Novita', 'Farhan Maulana', 'Gita Gutawa', 'Hendra Setiawan',
-      'Intan Permatasari', 'Joko Susanto', 'Kharisma Putri', 'Lukman Hakim',
-      'Maulana Malik', 'Nadya Salsabila', 'Oki Setiana'
+
+    const sampleStudents = [
+      { name: 'Alifia Rahmadani', class: 'X-1', gender: 'P', type: 'SISWA' },
+      { name: 'Bima Sakti Kusuma', class: 'X-4', gender: 'L', type: 'SISWA' },
+      { name: 'Citra Kirana', class: 'X-8', gender: 'P', type: 'SISWA' },
+      { name: 'Danang Wicaksono', class: 'XI-2', gender: 'L', type: 'SISWA' },
+      { name: 'Elsa Novita', class: 'XI-6', gender: 'P', type: 'SISWA' },
+      { name: 'Farhan Maulana', class: 'XI-9', gender: 'L', type: 'SISWA' },
+      { name: 'Gita Gutawa', class: 'XII-1', gender: 'P', type: 'SISWA' },
+      { name: 'Hendra Setiawan', class: 'XII-3', gender: 'L', type: 'SISWA' },
+      { name: 'Intan Permatasari', class: 'XII-7', gender: 'P', type: 'SISWA' },
+      { name: 'Joko Susanto', class: 'XII-12', gender: 'L', type: 'SISWA' },
+      { name: 'Drs. Supriyanto, M.Pd.', class: 'Guru Sejarah', gender: 'L', type: 'GURU' },
+      { name: 'Nurul Hidayati, S.Si.', class: 'Guru Biologi', gender: 'P', type: 'GURU' },
+      { name: 'Ahmad Zaki, S.Pd.', class: 'Guru Olahraga (PJOK)', gender: 'L', type: 'GURU' },
+      { name: 'Rudi Hartono, S.Sos.', class: 'Tendik / Tata Usaha', gender: 'L', type: 'TENDIK' },
+      { name: 'Siti Rohmah, A.Md.', class: 'Tendik / Laboran IPA', gender: 'P', type: 'TENDIK' }
     ];
 
-    const classes = ['X-1', 'X-4', 'X-8', 'X-12', 'XI-2', 'XI-6', 'XI-9', 'XI-12', 'XII-1', 'XII-3', 'XII-7', 'XII-12'];
-
-    const bulk = sampleNames.map((name, idx) => ({
-      nisn: '00' + (80000000 + Math.floor(Math.random() * 9999999)),
-      name: name,
-      class: classes[idx % classes.length],
-      gender: idx % 2 === 0 ? 'P' : 'L',
+    const bulk = sampleStudents.map((item, idx) => ({
+      voterType: item.type,
+      nisn: item.type === 'SISWA' 
+        ? '00' + (80000000 + Math.floor(Math.random() * 9999999))
+        : '19' + (75000000 + Math.floor(Math.random() * 20000000)) + '20' + (10 + idx) + '01' + Math.floor(1000 + Math.random() * 8999),
+      name: item.name,
+      class: item.class,
+      gender: item.gender,
       token: generateVoterToken()
     }));
 
     addBulkStudents(bulk);
-    if (onAddToast) onAddToast(`Berhasil men-generate ${bulk.length} siswa DPT baru dengan token acak.`, 'success');
+    if (onAddToast) onAddToast(`Berhasil men-generate 15 DPT (10 Siswa, 3 Guru, 2 Tendik) dengan token acak.`, 'success');
   };
 
   // CSV Import handler
@@ -165,9 +195,9 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         const text = event.target.result;
         const parsed = parseDptCsv(text);
         if (parsed.length > 0) {
-          // ensure each has token
           const withTokens = parsed.map(s => ({
             ...s,
+            voterType: s.voterType || 'SISWA',
             token: s.token || generateVoterToken()
           }));
           addBulkStudents(withTokens);
@@ -185,7 +215,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
 
   const handleResetVote = (student) => {
     if (isReadOnly) return;
-    if (window.confirm(`Reset hak pilih untuk ${student.name} (${student.nisn})? Siswa ini akan dapat memilih kembali.`)) {
+    if (window.confirm(`Reset hak pilih untuk ${student.name} (${student.nisn})? Pemilih ini akan dapat memilih kembali.`)) {
       resetStudentVote(student.id);
       if (onAddToast) onAddToast(`Hak pilih untuk ${student.name} berhasil di-reset.`, 'info');
     }
@@ -196,7 +226,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     if (window.confirm(`Hapus ${student.name} dari DPT?`)) {
       deleteStudent(student.id);
       setSelectedIds(prev => prev.filter(id => id !== student.id));
-      if (onAddToast) onAddToast(`Siswa ${student.name} telah dihapus dari DPT.`, 'info');
+      if (onAddToast) onAddToast(`Pemilih ${student.name} telah dihapus dari DPT.`, 'info');
     }
   };
 
@@ -223,21 +253,45 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     if (!isSuperAdmin || selectedIds.length === 0) return;
 
     const count = selectedIds.length;
-    if (window.confirm(`PERINGATAN HAPUS MASSAL:\n\nApakah Anda yakin ingin menghapus ${count} siswa terpilih dari DPT dan database Cloud Firestore? Tindakan ini tidak dapat dibatalkan.`)) {
+    if (window.confirm(`PERINGATAN HAPUS MASSAL:\n\nApakah Anda yakin ingin menghapus ${count} pemilih terpilih dari DPT dan database Cloud Firestore? Tindakan ini tidak dapat dibatalkan.`)) {
       await deleteBulkStudents(selectedIds);
       setSelectedIds([]);
-      if (onAddToast) onAddToast(`${count} siswa DPT terpilih berhasil dihapus dari sistem & cloud.`, 'warning');
+      if (onAddToast) onAddToast(`${count} pemilih DPT terpilih berhasil dihapus dari sistem & cloud.`, 'warning');
     }
   };
 
   const handleDeleteAll = async () => {
     if (!isSuperAdmin || students.length === 0) return;
 
-    if (window.confirm(`PERINGATAN KOSONGKAN DPT:\n\nApakah Anda yakin ingin MENGHAPUS SEMUA ${students.length} data siswa DPT dari sistem dan database Cloud Firestore?\n\nTindakan ini akan mengosongkan seluruh daftar pemilih agar Anda dapat memasukkan data DPT baru.`)) {
+    if (window.confirm(`PERINGATAN KOSONGKAN DPT:\n\nApakah Anda yakin ingin MENGHAPUS SEMUA ${students.length} data pemilih DPT dari sistem dan database Cloud Firestore?\n\nTindakan ini akan mengosongkan seluruh daftar pemilih agar Anda dapat memasukkan data DPT baru.`)) {
       await deleteAllStudents();
       setSelectedIds([]);
-      if (onAddToast) onAddToast('Seluruh data DPT siswa berhasil dikosongkan dari sistem & cloud.', 'warning');
+      if (onAddToast) onAddToast('Seluruh data DPT berhasil dikosongkan dari sistem & cloud.', 'warning');
     }
+  };
+
+  // Helper badge kategori
+  const renderCategoryBadge = (type) => {
+    const t = type || 'SISWA';
+    if (t === 'GURU') {
+      return (
+        <span className="badge badge-emerald" style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+          Guru
+        </span>
+      );
+    }
+    if (t === 'TENDIK') {
+      return (
+        <span className="badge badge-gold" style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }}>
+          Tendik
+        </span>
+      );
+    }
+    return (
+      <span className="badge badge-purple" style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}>
+        Siswa
+      </span>
+    );
   };
 
   return (
@@ -255,8 +309,8 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           <h2 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
             Daftar Pemilih Tetap (DPT) &amp; Token
           </h2>
-          <p style={{ fontSize: '0.9rem' }}>
-            Kelola data pemilih siswa, generate token rahasia, impor CSV, dan cetak kartu pemilih
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            Kelola data pemilih siswa, guru, dan tenaga kependidikan (Tendik), token rahasia, impor CSV, dan cetak kartu
           </p>
         </div>
 
@@ -299,10 +353,10 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                   type="button"
                   className="btn btn-outline"
                   onClick={handleGenerateSampleStudents}
-                  title="Generate 15 Siswa Otomatis"
+                  title="Generate 15 Pemilih Otomatis (Siswa, Guru, Tendik)"
                 >
                   <PlusCircle size={16} />
-                  <span>+15 Siswa Otomatis</span>
+                  <span>+15 DPT Otomatis</span>
                 </button>
               )}
 
@@ -322,13 +376,97 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={openAddModal}
+                onClick={() => openAddModal('SISWA')}
               >
                 <UserPlus size={17} />
-                <span>Tambah Siswa</span>
+                <span>Tambah Pemilih</span>
               </button>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Ringkasan Statistik Kategori Pemilih */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{
+          background: '#ffffff',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem',
+          border: '1px solid #e2e8f0',
+          borderLeft: '4px solid #2563eb',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+            Total Seluruh DPT
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#0f172a', marginTop: '0.2rem' }}>
+            {students.length}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#2563eb', marginTop: '0.15rem' }}>
+            Hak Suara Terdaftar
+          </div>
+        </div>
+
+        <div style={{
+          background: '#ffffff',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem',
+          border: '1px solid #e2e8f0',
+          borderLeft: '4px solid #3b82f6',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+            Pemilih Siswa
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#1d4ed8', marginTop: '0.2rem' }}>
+            {totalSiswa ?? students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+            Kelas X, XI, dan XII
+          </div>
+        </div>
+
+        <div style={{
+          background: '#ffffff',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem',
+          border: '1px solid #e2e8f0',
+          borderLeft: '4px solid #059669',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+            Pemilih Guru
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#047857', marginTop: '0.2rem' }}>
+            {totalGuru ?? students.filter(s => s.voterType === 'GURU').length}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+            Dewan Guru / Tenaga Pendidik
+          </div>
+        </div>
+
+        <div style={{
+          background: '#ffffff',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem',
+          border: '1px solid #e2e8f0',
+          borderLeft: '4px solid #d97706',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}>
+          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+            Tenaga Kependidikan
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#b45309', marginTop: '0.2rem' }}>
+            {totalTendik ?? students.filter(s => s.voterType === 'TENDIK').length}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+            Staf TU &amp; Tenaga Kependidikan
+          </div>
         </div>
       </div>
 
@@ -351,7 +489,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
 
       {/* Filter & Search Bar */}
       <div className="glass-panel" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'center' }}>
           {/* Search Box */}
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -359,20 +497,35 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
               type="text"
               className="form-input"
               style={{ paddingLeft: '2.8rem' }}
-              placeholder="Cari Nama, NISN, atau Token..."
+              placeholder="Cari Nama, NISN/NIP, Token..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Filter Kelas */}
+          {/* Filter Kategori Pemilih */}
+          <div>
+            <select
+              className="form-select"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="ALL">Semua Jenis Pemilih</option>
+              <option value="SISWA">Hanya Siswa ({totalSiswa ?? students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length})</option>
+              <option value="GURU">Hanya Guru ({totalGuru ?? students.filter(s => s.voterType === 'GURU').length})</option>
+              <option value="TENDIK">Hanya Tenaga Kependidikan ({totalTendik ?? students.filter(s => s.voterType === 'TENDIK').length})</option>
+            </select>
+          </div>
+
+          {/* Filter Jenjang Kelas (Khusus Siswa / Semua) */}
           <div>
             <select
               className="form-select"
               value={filterClass}
               onChange={(e) => setFilterClass(e.target.value)}
+              disabled={filterCategory === 'GURU' || filterCategory === 'TENDIK'}
             >
-              <option value="ALL">Semua Jenjang Kelas</option>
+              <option value="ALL">Semua Kelas</option>
               <option value="X">Kelas X (X-1 s/d X-12)</option>
               <option value="XI">Kelas XI (XI-1 s/d XI-12)</option>
               <option value="XII">Kelas XII (XII-1 s/d XII-12)</option>
@@ -387,14 +540,14 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
               onChange={(e) => setFilterStatus(e.target.value)}
             >
               <option value="ALL">Semua Status Memilih</option>
-              <option value="NOT_VOTED">Belum Memilih (Hak Suara Aktif)</option>
+              <option value="NOT_VOTED">Belum Memilih (Aktif)</option>
               <option value="VOTED">Sudah Memilih (Selesai)</option>
             </select>
           </div>
+        </div>
 
-          <div style={{ textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Menampilkan <strong style={{ color: 'var(--text-primary)' }}>{filteredStudents.length}</strong> dari {students.length} DPT
-          </div>
+        <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+          Menampilkan <strong style={{ color: 'var(--text-primary)' }}>{filteredStudents.length}</strong> dari {students.length} data DPT
         </div>
       </div>
 
@@ -415,7 +568,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span style={{ fontWeight: '700', color: '#b91c1c', fontSize: '0.95rem' }}>
-              ✓ {selectedIds.length} Siswa Terpilih (Centang)
+              ✓ {selectedIds.length} Pemilih Terpilih (Centang)
             </span>
             <button
               type="button"
@@ -458,9 +611,10 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                 </th>
               )}
               <th style={{ width: '50px' }}>No</th>
-              <th>NISN</th>
-              <th>Nama Lengkap Siswa</th>
-              <th>Kelas</th>
+              <th>NISN / NIP / ID</th>
+              <th>Nama Lengkap</th>
+              <th>Kategori</th>
+              <th>Kelas / Jabatan</th>
               <th>Token Akses</th>
               <th>Status Memilih</th>
               <th>Waktu Pencoblosan</th>
@@ -470,7 +624,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           <tbody>
             {filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan={isReadOnly ? 7 : 9} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
+                <td colSpan={isReadOnly ? 8 : 10} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
                   {students.length === 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
                       <div style={{
@@ -489,13 +643,17 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                         Daftar Pemilih Tetap (DPT) Kosong
                       </div>
                       <div style={{ fontSize: '0.88rem', maxWidth: '460px', lineHeight: '1.5' }}>
-                        Seluruh data pemilih telah dikosongkan. Silakan tambah data siswa secara manual, impor berkas CSV sekolah, atau generate siswa otomatis.
+                        Seluruh data pemilih telah dikosongkan. Silakan tambah data pemilih (Siswa, Guru, Tendik), impor berkas CSV, atau generate otomatis.
                       </div>
                       {!isReadOnly && (
                         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                          <button type="button" className="btn btn-primary" onClick={openAddModal}>
+                          <button type="button" className="btn btn-primary" onClick={() => openAddModal('SISWA')}>
                             <UserPlus size={16} />
-                            <span>Tambah Siswa Manual</span>
+                            <span>Tambah Siswa</span>
+                          </button>
+                          <button type="button" className="btn btn-emerald" onClick={() => openAddModal('GURU')}>
+                            <GraduationCap size={16} />
+                            <span>Tambah Guru</span>
                           </button>
                           <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
                             <Upload size={16} />
@@ -506,7 +664,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                       )}
                     </div>
                   ) : (
-                    'Tidak ada data siswa DPT yang cocok dengan pencarian / filter.'
+                    'Tidak ada data pemilih DPT yang cocok dengan pencarian / filter.'
                   )}
                 </td>
               </tr>
@@ -529,7 +687,10 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                   </td>
                   <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{s.name}</td>
                   <td>
-                    <span className="badge badge-purple">{s.class}</span>
+                    {renderCategoryBadge(s.voterType)}
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{s.class}</span>
                   </td>
                   <td>
                     <span style={{
@@ -578,7 +739,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                           type="button"
                           className="btn btn-sm btn-outline"
                           onClick={() => openEditModal(s)}
-                          title="Edit Data Siswa"
+                          title="Edit Data Pemilih"
                           style={{ padding: '0.35rem 0.6rem' }}
                         >
                           <Edit2 size={14} />
@@ -604,22 +765,58 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         </table>
       </div>
 
-      {/* Modal Add / Edit Single Student */}
+      {/* Modal Add / Edit Single Voter */}
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => {
           setIsAddModalOpen(false);
           setEditingStudent(null);
         }}
-        title={editingStudent ? `Edit Data Siswa: ${editingStudent.name}` : "Tambah Siswa Baru ke DPT"}
-        maxWidth="500px"
+        title={editingStudent ? `Edit Data Pemilih: ${editingStudent.name}` : "Tambah Pemilih Baru ke DPT"}
+        maxWidth="520px"
       >
         <form onSubmit={handleSaveSingle}>
+          {/* Pilihan Jenis Pemilih */}
           <div className="form-group">
-            <label className="form-label">NISN (10 Digit)</label>
+            <label className="form-label" style={{ fontWeight: '700' }}>Jenis / Kategori Pemilih</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+              {[
+                { key: 'SISWA', label: 'Siswa', icon: Users },
+                { key: 'GURU', label: 'Guru', icon: GraduationCap },
+                { key: 'TENDIK', label: 'Tendik', icon: Briefcase }
+              ].map(cat => {
+                const IconComponent = cat.icon;
+                const isSelected = (formData.voterType || 'SISWA') === cat.key;
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        voterType: cat.key,
+                        class: cat.key === 'SISWA' ? (prev.class.startsWith('X') ? prev.class : 'X-1') : cat.key === 'GURU' ? 'Guru Mapel' : 'Staf Tata Usaha'
+                      }));
+                    }}
+                    className={`btn ${isSelected ? 'btn-primary' : 'btn-outline'}`}
+                    style={{ padding: '0.6rem', fontSize: '0.85rem', justifyContent: 'center' }}
+                  >
+                    <IconComponent size={15} />
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              {formData.voterType === 'SISWA' ? 'NISN (10 Digit)' : formData.voterType === 'GURU' ? 'NIP / NUPTK / ID Guru' : 'NIP / NIK / ID Tendik'}
+            </label>
             <input
               type="text"
               className="form-input"
+              placeholder={formData.voterType === 'SISWA' ? 'Misal: 0071234501' : 'Nomor Induk Pegawai / NUPTK'}
               value={formData.nisn}
               onChange={(e) => setFormData({ ...formData, nisn: e.target.value })}
               required
@@ -627,11 +824,13 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Nama Lengkap Siswa</label>
+            <label className="form-label">
+              {formData.voterType === 'SISWA' ? 'Nama Lengkap Siswa' : formData.voterType === 'GURU' ? 'Nama Lengkap & Gelar Guru' : 'Nama Lengkap Tenaga Kependidikan'}
+            </label>
             <input
               type="text"
               className="form-input"
-              placeholder="Contoh: Muhammad Ilham"
+              placeholder={formData.voterType === 'SISWA' ? 'Contoh: Muhammad Ilham' : formData.voterType === 'GURU' ? 'Contoh: Drs. Hendro Wibowo, M.Pd.' : 'Contoh: Bambang Eko, S.Kom.'}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
@@ -640,18 +839,20 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
             <div className="form-group">
-              <label className="form-label">Kelas</label>
+              <label className="form-label">
+                {formData.voterType === 'SISWA' ? 'Kelas Siswa' : formData.voterType === 'GURU' ? 'Mata Pelajaran / Tugas' : 'Unit / Bagian Kerja'}
+              </label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="Contoh: X-1 / XI-3 / XII-7"
+                placeholder={formData.voterType === 'SISWA' ? 'Contoh: X-1 / XII-4' : formData.voterType === 'GURU' ? 'Contoh: Guru Matematika' : 'Contoh: Staf TU / Operator IT'}
                 value={formData.class}
                 onChange={(e) => setFormData({ ...formData, class: e.target.value })}
                 required
               />
             </div>
             <div className="form-group">
-              <label className="form-label">L/P</label>
+              <label className="form-label">L / P</label>
               <select
                 className="form-select"
                 value={formData.gender}
@@ -690,7 +891,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
               Batal
             </button>
             <button type="submit" className="btn btn-primary">
-              {editingStudent ? 'Simpan Perubahan Siswa' : 'Simpan ke DPT'}
+              {editingStudent ? 'Simpan Perubahan' : 'Simpan ke DPT'}
             </button>
           </div>
         </form>

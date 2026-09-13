@@ -23,7 +23,8 @@ export function AdminDashboard({ onNavigate }) {
     participationPercentage, 
     totalUnvoted, 
     auditLogs,
-    settings 
+    settings,
+    dptBreakdown
   } = useElection();
   const { adminUser } = useAuth();
 
@@ -83,7 +84,7 @@ export function AdminDashboard({ onNavigate }) {
             onClick={() => onNavigate('projector')}
           >
             <Tv size={17} />
-            <span>Mode Layar Proyektor Aula</span>
+            <span>Mode Layar Monitoring</span>
           </button>
           
           <button 
@@ -106,6 +107,11 @@ export function AdminDashboard({ onNavigate }) {
           <div>
             <div className="stat-val">{formatNumber(totalDpt)}</div>
             <div className="stat-title">Daftar Pemilih Tetap (DPT)</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span>Siswa: {dptBreakdown?.siswa ?? 0}</span> • 
+              <span>Guru: {dptBreakdown?.guru ?? 0}</span> • 
+              <span>Tendik: {dptBreakdown?.tendik ?? 0}</span>
+            </div>
           </div>
         </div>
 

@@ -43,7 +43,7 @@ export function VoterLogin({ onLoginSuccess }) {
     );
 
     if (!student) {
-      setErrorMsg('NISN atau Token Akses tidak cocok / tidak terdaftar di DPT SMAN 1 Batu. Hubungi Panitia TPS jika ada kendala.');
+      setErrorMsg('NISN/NIP atau Token Akses tidak cocok / tidak terdaftar di DPT SMAN 1 Batu. Hubungi Panitia TPS jika ada kendala.');
       return;
     }
 
@@ -85,7 +85,7 @@ export function VoterLogin({ onLoginSuccess }) {
             Bilik Suara Digital
           </h2>
           <p style={{ fontSize: '0.95rem' }}>
-            Masukkan <strong>NISN</strong> dan <strong>Token Akses</strong> yang tertera pada Kartu Pemilih Anda
+            Masukkan <strong>NISN / NIP</strong> dan <strong>Token Akses</strong> yang tertera pada Kartu Pemilih Anda
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export function VoterLogin({ onLoginSuccess }) {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="voter-nisn">
-              Nomor Induk Siswa Nasional (NISN)
+              NISN Siswa / NIP Guru &amp; Tendik
             </label>
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
@@ -131,10 +131,10 @@ export function VoterLogin({ onLoginSuccess }) {
                 type="text"
                 className="form-input"
                 style={{ paddingLeft: '2.8rem', letterSpacing: '0.05em' }}
-                placeholder="Contoh: 0071234501"
+                placeholder="Contoh: NISN (10 digit) atau NIP (18 digit)"
                 value={nisn}
                 onChange={(e) => setNisn(e.target.value)}
-                maxLength={12}
+                maxLength={25}
                 autoComplete="off"
                 required
               />
@@ -143,7 +143,7 @@ export function VoterLogin({ onLoginSuccess }) {
 
           <div className="form-group">
             <label className="form-label" htmlFor="voter-token">
-              Token Akses Rahasia (6 Karakter)
+              Token Akses Rahasia
             </label>
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gold)' }}>
@@ -160,10 +160,10 @@ export function VoterLogin({ onLoginSuccess }) {
                   fontWeight: '700',
                   color: 'var(--gold)'
                 }}
-                placeholder="Contoh: SB26A1"
+                placeholder="Contoh: SB26A1 atau Token Kartu"
                 value={token}
                 onChange={(e) => setToken(e.target.value.toUpperCase())}
-                maxLength={8}
+                maxLength={30}
                 autoComplete="off"
                 required
               />

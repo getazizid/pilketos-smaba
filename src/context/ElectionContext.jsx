@@ -282,10 +282,16 @@ export function ElectionProvider({ children }) {
     addLog(`Pasangan Calon telah dihapus dari sistem.`, 'WARNING');
   };
 
-  // Manajemen Siswa (DPT)
+  // Manajemen Siswa & Pemilih (DPT)
   const addStudent = async (studentData) => {
     const id = studentData.id || 'std-' + Date.now();
-    const fullData = { ...studentData, id, hasVoted: false, votedAt: null };
+    const fullData = { 
+      ...studentData, 
+      id, 
+      voterType: studentData.voterType || 'SISWA',
+      hasVoted: false, 
+      votedAt: null 
+    };
 
     if (isFirebaseConfigured && db) {
       try {
@@ -316,8 +322,9 @@ export function ElectionProvider({ children }) {
     const formatted = bulkList.map((s, idx) => ({
       ...s,
       id: s.id || `std-bulk-${Date.now()}-${idx}`,
-      hasVoted: false,
-      votedAt: null
+      voterType: s.voterType || 'SISWA',
+      hasVoted: s.hasVoted || false,
+      votedAt: s.votedAt || null
     }));
 
     if (isFirebaseConfigured && db) {
@@ -566,6 +573,16 @@ export function ElectionProvider({ children }) {
   const participationPercentage = totalDpt > 0 ? ((totalVotes / totalDpt) * 100).toFixed(1) : 0;
   const totalUnvoted = Math.max(0, totalDpt - totalVotes);
 
+  // Breakdown per kategori pemilih (Siswa, Guru, Tenaga Kependidikan)
+  const totalSiswa = students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length;
+  const totalGuru = students.filter(s => s.voterType === 'GURU').length;
+  const totalTendik = students.filter(s => s.voterType === 'TENDIK').length;
+  const dptBreakdown = {
+    siswa: totalSiswa,
+    guru: totalGuru,
+    tendik: totalTendik
+  };
+
   return (
     <ElectionContext.Provider
       value={{
@@ -578,6 +595,10 @@ export function ElectionProvider({ children }) {
         totalVotes,
         participationPercentage,
         totalUnvoted,
+        totalSiswa,
+        totalGuru,
+        totalTendik,
+        dptBreakdown,
         submitVote,
         addCandidate,
         updateCandidate,

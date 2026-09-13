@@ -37,16 +37,18 @@ export const INITIAL_CANDIDATES = [
 ];
 
 export const INITIAL_STUDENTS = [
-  { id: 'std-1', nisn: '0071234501', name: 'Achmad Fauzi Maulana', class: 'XII-1', gender: 'L', token: 'SB26A1', hasVoted: false, votedAt: null },
-  { id: 'std-2', nisn: '0071234502', name: 'Annisa Bella Safitri', class: 'XII-2', gender: 'P', token: 'SB26B2', hasVoted: false, votedAt: null },
-  { id: 'std-3', nisn: '0071234503', name: 'Bagas Aditya Nugraha', class: 'XII-4', gender: 'L', token: 'SB26C3', hasVoted: false, votedAt: null },
-  { id: 'std-4', nisn: '0071234504', name: 'Cantika Dewi Anggraini', class: 'XII-6', gender: 'P', token: 'SB26D4', hasVoted: false, votedAt: null },
-  { id: 'std-5', nisn: '0081234505', name: 'Dimas Rendy Saputra', class: 'XI-3', gender: 'L', token: 'SB26E5', hasVoted: false, votedAt: null },
-  { id: 'std-6', nisn: '0081234506', name: 'Fadhilah Nur Rahma', class: 'XI-5', gender: 'P', token: 'SB26F6', hasVoted: false, votedAt: null },
-  { id: 'std-7', nisn: '0091234507', name: 'Gibran Arya Sena', class: 'X-1', gender: 'L', token: 'SB26G7', hasVoted: false, votedAt: null },
-  { id: 'std-8', nisn: '0091234508', name: 'Hafizhah Aulia Putri', class: 'X-2', gender: 'P', token: 'SB26H8', hasVoted: false, votedAt: null },
-  { id: 'std-9', nisn: '0091234509', name: 'Ilham Wahyu Pratama', class: 'X-7', gender: 'L', token: 'SB26J9', hasVoted: false, votedAt: null },
-  { id: 'std-10', nisn: '0091234510', name: 'Jessica Aurelia Gunawan', class: 'X-11', gender: 'P', token: 'SB26K0', hasVoted: false, votedAt: null }
+  { id: 'std-1', nisn: '0071234501', name: 'Achmad Fauzi Maulana', class: 'XII-1', gender: 'L', token: 'SB26A1', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-2', nisn: '0071234502', name: 'Annisa Bella Safitri', class: 'XII-2', gender: 'P', token: 'SB26B2', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-3', nisn: '0071234503', name: 'Bagas Aditya Nugraha', class: 'XII-4', gender: 'L', token: 'SB26C3', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-4', nisn: '0071234504', name: 'Cantika Dewi Anggraini', class: 'XII-6', gender: 'P', token: 'SB26D4', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-5', nisn: '0081234505', name: 'Dimas Rendy Saputra', class: 'XI-3', gender: 'L', token: 'SB26E5', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-6', nisn: '0081234506', name: 'Fadhilah Nur Rahma', class: 'XI-5', gender: 'P', token: 'SB26F6', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-7', nisn: '0091234507', name: 'Gibran Arya Sena', class: 'X-1', gender: 'L', token: 'SB26G7', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-8', nisn: '0091234508', name: 'Hafizhah Aulia Putri', class: 'X-2', gender: 'P', token: 'SB26H8', hasVoted: false, votedAt: null, voterType: 'SISWA' },
+  { id: 'std-9', nisn: '198104122006041008', name: 'Drs. Hendro Wibowo, M.Pd.', class: 'Guru Bahasa Indonesia', gender: 'L', token: 'GR2601', hasVoted: false, votedAt: null, voterType: 'GURU' },
+  { id: 'std-10', nisn: '198602182010012015', name: 'Tri Wahyuni, S.Pd.', class: 'Guru Matematika', gender: 'P', token: 'GR2602', hasVoted: false, votedAt: null, voterType: 'GURU' },
+  { id: 'std-11', nisn: '199003252019031005', name: 'Bambang Eko Prasetyo, S.Kom.', class: 'Tendik / Operator IT', gender: 'L', token: 'TK2601', hasVoted: false, votedAt: null, voterType: 'TENDIK' },
+  { id: 'std-12', nisn: '198807152014022003', name: 'Dewi Lestari, A.Md.', class: 'Tendik / Staf Tata Usaha', gender: 'P', token: 'TK2602', hasVoted: false, votedAt: null, voterType: 'TENDIK' }
 ];
 
 export const INITIAL_SETTINGS = {

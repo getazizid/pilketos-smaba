@@ -183,7 +183,7 @@ export function AdminPanel({ onNavigateToProjector, onNavigateToBallot, onAddToa
             style={{ width: '100%', justifyContent: 'flex-start' }}
           >
             <Tv size={15} />
-            <span>Layar Aula TPS</span>
+            <span>Layar Monitoring</span>
           </button>
 
           <button

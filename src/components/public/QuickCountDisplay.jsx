@@ -4,7 +4,7 @@ import { Maximize, Minimize, ArrowLeft, Trophy, Users, Vote, Percent, Clock, Rad
 import { formatNumber } from '../../utils/helpers';
 
 export function QuickCountDisplay({ onBack }) {
-  const { candidates, totalDpt, totalVotes, participationPercentage, totalUnvoted, settings } = useElection();
+  const { candidates, totalDpt, totalVotes, participationPercentage, totalUnvoted, settings, dptBreakdown } = useElection();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleFullscreen = () => {
@@ -88,7 +88,7 @@ export function QuickCountDisplay({ onBack }) {
         {/* Status TPS & Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div className="badge badge-green" style={{ fontSize: '0.85rem', padding: '0.45rem 1rem' }}>
-            <span className="status-dot"></span> LIVE AUDITORIUM
+            <span className="status-dot"></span> LIVE MONITORING
           </div>
 
           <button
@@ -108,7 +108,7 @@ export function QuickCountDisplay({ onBack }) {
             title="Kembali ke Beranda"
           >
             <ArrowLeft size={16} />
-            <span>Keluar Proyektor</span>
+            <span>Keluar Layar Monitoring</span>
           </button>
         </div>
       </div>
@@ -122,21 +122,48 @@ export function QuickCountDisplay({ onBack }) {
       }}>
         <div style={{
           background: '#ffffff',
-          padding: '1.5rem',
+          padding: '1.25rem 1.5rem',
           textAlign: 'center',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid #e2e8f0',
           borderTop: '5px solid #2563eb',
-          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)'
+          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
         }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
-            Total DPT Terdaftar
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
+              Total DPT Terdaftar
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#0f172a', marginTop: '0.2rem', lineHeight: '1.1' }}>
+              {formatNumber(totalDpt)}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: '600', marginTop: '0.25rem' }}>
+              Hak Suara Pemilih Aktif
+            </div>
           </div>
-          <div style={{ fontSize: '2.6rem', fontWeight: '900', color: '#0f172a', marginTop: '0.2rem', lineHeight: '1.1' }}>
-            {formatNumber(totalDpt)}
-          </div>
-          <div style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: '600', marginTop: '0.3rem' }}>
-            Hak Suara Siswa Aktif
+
+          {/* Rincian Jumlah Siswa, Guru, dan Tendik */}
+          <div style={{
+            marginTop: '0.75rem',
+            paddingTop: '0.65rem',
+            borderTop: '1px dashed #e2e8f0',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.4rem',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #dbeafe' }}>
+              Siswa: {formatNumber(dptBreakdown?.siswa ?? 0)}
+            </span>
+            <span style={{ background: '#f0fdf4', color: '#15803d', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #dcfce7' }}>
+              Guru: {formatNumber(dptBreakdown?.guru ?? 0)}
+            </span>
+            <span style={{ background: '#fefce8', color: '#a16207', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #fef08a' }}>
+              Tendik: {formatNumber(dptBreakdown?.tendik ?? 0)}
+            </span>
           </div>
         </div>
 

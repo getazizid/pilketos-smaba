@@ -62,15 +62,15 @@ export function Navbar({ currentView, setCurrentView, onOpenHelp }) {
 
         {/* Actions */}
         <div className="nav-actions">
-          {/* Layar Proyektor */}
+          {/* Layar Monitoring */}
           <button
             type="button"
             className={`btn btn-sm ${currentView === 'projector' ? 'btn-gold' : 'btn-outline'}`}
             onClick={() => setCurrentView('projector')}
-            title="Tampilkan Layar Proyektor Aula TPS"
+            title="Tampilkan Layar Monitoring Quick Count"
           >
             <Tv size={15} />
-            <span className="hide-mobile">Layar Aula</span>
+            <span className="hide-mobile">Layar Monitoring</span>
           </button>
 
           {/* Bantuan / Tata Cara */}

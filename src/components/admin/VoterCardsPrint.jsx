@@ -4,14 +4,18 @@ import { Printer, ArrowLeft, Filter } from 'lucide-react';
 
 export function VoterCardsPrint({ onBack }) {
   const { students, settings } = useElection();
+  const [selectedCategory, setSelectedCategory] = useState('ALL'); // 'ALL', 'SISWA', 'GURU', 'TENDIK'
   const [selectedClass, setSelectedClass] = useState('ALL');
 
   // Ambil daftar kelas unik
   const uniqueClasses = Array.from(new Set(students.map(s => s.class))).sort();
 
-  const filteredCards = selectedClass === 'ALL'
-    ? students
-    : students.filter(s => s.class === selectedClass);
+  const filteredCards = students.filter(s => {
+    const sCat = s.voterType || 'SISWA';
+    const matchCat = selectedCategory === 'ALL' || sCat === selectedCategory;
+    const matchClass = selectedClass === 'ALL' || s.class === selectedClass;
+    return matchCat && matchClass;
+  });
 
   const handlePrint = () => {
     window.print();
@@ -44,17 +48,33 @@ export function VoterCardsPrint({ onBack }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Filter Kategori */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Filter size={16} color="var(--text-muted)" />
+            <select
+              className="form-select"
+              style={{ width: 'auto', padding: '0.5rem 1rem' }}
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="ALL">Semua Jenis Pemilih</option>
+              <option value="SISWA">Hanya Siswa</option>
+              <option value="GURU">Hanya Guru</option>
+              <option value="TENDIK">Hanya Tendik</option>
+            </select>
+          </div>
+
+          {/* Filter Kelas/Unit */}
+          <div>
             <select
               className="form-select"
               style={{ width: 'auto', padding: '0.5rem 1rem' }}
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
             >
-              <option value="ALL">Semua Kelas ({students.length} Siswa)</option>
+              <option value="ALL">Semua Kelas / Bagian</option>
               {uniqueClasses.map(cls => (
-                <option key={cls} value={cls}>Kelas {cls}</option>
+                <option key={cls} value={cls}>{cls}</option>
               ))}
             </select>
           </div>
@@ -72,105 +92,114 @@ export function VoterCardsPrint({ onBack }) {
         gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
         gap: '1.25rem'
       }}>
-        {filteredCards.map((student) => (
-          <div
-            key={student.id}
-            className="voter-card-print"
-            style={{
-              border: '2px dashed #94a3b8',
-              borderRadius: '10px',
-              padding: '1.25rem',
-              background: '#ffffff',
-              color: '#0f172a',
-              position: 'relative',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-            }}
-          >
-            {/* Header Kartu */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              borderBottom: '2px solid #0f172a',
-              paddingBottom: '0.65rem',
-              marginBottom: '0.85rem'
-            }}>
-              <img
-                src={settings.schoolLogo || '/assets/logo.png'}
-                alt="Logo SMAN 1 Batu"
-                style={{ width: '42px', height: '42px', objectFit: 'contain' }}
-              />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.65rem', fontWeight: '800', letterSpacing: '0.05em', color: '#b45309', textTransform: 'uppercase' }}>
-                  KARTU SUARA PEMILIH OSIS 2026
+        {filteredCards.map((student) => {
+          const type = student.voterType || 'SISWA';
+          const typeBadgeText = type === 'GURU' ? 'DEWAN GURU' : type === 'TENDIK' ? 'TENAGA KEPENDIDIKAN' : 'SISWA';
+          const typeFooterText = type === 'GURU' ? '1 Guru = 1 Suara' : type === 'TENDIK' ? '1 Tendik = 1 Suara' : '1 Siswa = 1 Suara';
+
+          return (
+            <div
+              key={student.id}
+              className="voter-card-print"
+              style={{
+                border: '2px dashed #94a3b8',
+                borderRadius: '10px',
+                padding: '1.25rem',
+                background: '#ffffff',
+                color: '#0f172a',
+                position: 'relative',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+              }}
+            >
+              {/* Header Kartu */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                borderBottom: '2px solid #0f172a',
+                paddingBottom: '0.65rem',
+                marginBottom: '0.85rem'
+              }}>
+                <img
+                  src={settings.schoolLogo || '/assets/logo.png'}
+                  alt="Logo SMAN 1 Batu"
+                  style={{ width: '42px', height: '42px', objectFit: 'contain' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.62rem', fontWeight: '800', letterSpacing: '0.05em', color: '#b45309', textTransform: 'uppercase' }}>
+                    KARTU SUARA PEMILIH OSIS 2026
+                  </div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#0f172a', lineHeight: '1.2' }}>
+                    SMA NEGERI 1 BATU
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#0f172a', lineHeight: '1.2' }}>
-                  SMA NEGERI 1 BATU
+                <div style={{
+                  fontSize: '0.62rem',
+                  fontWeight: '700',
+                  background: type === 'GURU' ? '#047857' : type === 'TENDIK' ? '#b45309' : '#1e3a8a',
+                  color: '#fff',
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '4px',
+                  letterSpacing: '0.04em'
+                }}>
+                  {typeBadgeText}
                 </div>
               </div>
+
+              {/* Data Pemilih */}
+              <div style={{ marginBottom: '0.85rem' }}>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'uppercase', fontWeight: '600' }}>
+                  {type === 'GURU' ? 'Nama Pendidik' : type === 'TENDIK' ? 'Nama Staf / Tendik' : 'Nama Lengkap Siswa'}
+                </div>
+                <div style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {student.name}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem', fontSize: '0.82rem', fontWeight: '700', color: '#334155' }}>
+                  <span>{type === 'SISWA' ? 'NISN' : 'NIP / ID'}: {student.nisn}</span>
+                  <span>{type === 'SISWA' ? 'Kelas' : 'Unit/Mapel'}: {student.class}</span>
+                </div>
+              </div>
+
+              {/* Kotak Token Rahasia */}
               <div style={{
+                background: '#f8fafc',
+                border: '2px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '0.65rem',
+                textAlign: 'center',
+                marginBottom: '0.75rem'
+              }}>
+                <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  TOKEN AKSES RAHASIA BILIK SUARA
+                </div>
+                <div style={{
+                  fontFamily: 'monospace',
+                  fontSize: '1.45rem',
+                  fontWeight: '900',
+                  letterSpacing: '0.2em',
+                  color: '#1e3a8a',
+                  marginTop: '0.2rem'
+                }}>
+                  {student.token}
+                </div>
+              </div>
+
+              {/* Footer Kartu & Potong Guide */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 fontSize: '0.65rem',
-                fontWeight: '700',
-                background: '#0f172a',
-                color: '#fff',
-                padding: '0.2rem 0.5rem',
-                borderRadius: '4px'
+                color: '#64748b',
+                borderTop: '1px solid #e2e8f0',
+                paddingTop: '0.5rem'
               }}>
-                LUBER
+                <span>Gunakan di Bilik Suara TPS SMABA</span>
+                <span>{typeFooterText}</span>
               </div>
             </div>
-
-            {/* Data Siswa */}
-            <div style={{ marginBottom: '0.85rem' }}>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Nama Lengkap Siswa</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {student.name}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem', fontSize: '0.82rem', fontWeight: '700', color: '#334155' }}>
-                <span>NISN: {student.nisn}</span>
-                <span>Kelas: {student.class}</span>
-              </div>
-            </div>
-
-            {/* Kotak Token Rahasia */}
-            <div style={{
-              background: '#f8fafc',
-              border: '2px solid #cbd5e1',
-              borderRadius: '8px',
-              padding: '0.65rem',
-              textAlign: 'center',
-              marginBottom: '0.75rem'
-            }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                TOKEN AKSES RAHASIA BILIK SUARA
-              </div>
-              <div style={{
-                fontFamily: 'monospace',
-                fontSize: '1.45rem',
-                fontWeight: '900',
-                letterSpacing: '0.2em',
-                color: '#1e3a8a',
-                marginTop: '0.2rem'
-              }}>
-                {student.token}
-              </div>
-            </div>
-
-            {/* Footer Kartu & Potong Guide */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.65rem',
-              color: '#64748b',
-              borderTop: '1px solid #e2e8f0',
-              paddingTop: '0.5rem'
-            }}>
-              <span>Gunakan di Bilik Suara TPS SMABA</span>
-              <span>1 Siswa = 1 Suara</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
