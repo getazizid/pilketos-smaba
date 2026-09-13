@@ -164,14 +164,14 @@ export function AdminPanel({ onNavigateToProjector, onNavigateToBallot, onAddToa
           </div>
         )}
 
-        {/* Pengaturan & Server: Khusus Super Admin */}
+        {/* Pengaturan: Khusus Super Admin */}
         {isSuperAdmin && (
           <div
             className={`admin-nav-item ${currentTab === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveTab('settings')}
           >
             <Settings size={18} />
-            <span>Pengaturan &amp; Server</span>
+            <span>Pengaturan</span>
           </div>
         )}
 
@@ -254,7 +254,7 @@ export function AdminPanel({ onNavigateToProjector, onNavigateToBallot, onAddToa
             )}
 
             {currentTab === 'report' && (
-              <OfficialReport onBack={() => setActiveTab('dashboard')} />
+              <OfficialReport onBack={() => setActiveTab('dashboard')} onAddToast={onAddToast} />
             )}
 
             {currentTab === 'roles' && (

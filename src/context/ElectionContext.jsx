@@ -51,7 +51,7 @@ export function ElectionProvider({ children }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('pilketos_settings_v4');
-      if (saved) return JSON.parse(saved);
+      if (saved) return { ...INITIAL_SETTINGS, ...JSON.parse(saved) };
       localStorage.removeItem('pilketos_settings_v3');
       localStorage.removeItem('pilketos_settings_v2');
       localStorage.removeItem('pilketos_settings');
@@ -133,7 +133,7 @@ export function ElectionProvider({ children }) {
     // 2. Listen to Settings
     const unsubSettings = onSnapshot(doc(db, 'settings', 'main'), (docSnap) => {
       if (docSnap.exists()) {
-        setSettings(docSnap.data());
+        setSettings({ ...INITIAL_SETTINGS, ...docSnap.data() });
       }
     }, (err) => console.warn('Firestore settings listener:', err));
 

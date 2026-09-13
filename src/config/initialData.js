@@ -56,9 +56,40 @@ export const INITIAL_SETTINGS = {
   schoolName: 'SMA Negeri 1 Batu',
   schoolAddress: 'Jl. KH. Agus Salim No. 57, Sisir, Kec. Batu, Kota Batu, Jawa Timur 65314',
   schoolLogo: '/assets/logo.png',
+  
+  // Format Berita Acara Resmi
+  reportTitle: 'BERITA ACARA REKAPITULASI HASIL PENGHITUNGAN SUARA',
+  reportSubtitle: 'PEMILIHAN KETUA DAN WAKIL KETUA OSIS TAHUN 2026',
+  reportDocNumber: '421.3 / 118 / OSIS-SMABA / IX / 2026',
+  reportDay: 'Selasa',
+  reportDate: '8 September 2026',
+  reportCity: 'Kota Batu',
+
+  // Pejabat & Saksi Penandatangan Berita Acara
+  headmasterTitle: 'Kepala SMA Negeri 1 Batu',
   headmasterName: 'Anto Dwi Cahyono., S.Pd., M.M',
+  headmasterNip: '19700415 199702 1 003',
+
+  osisAdvisorTitle: 'Pembina OSIS SMAN 1 Batu',
   osisAdvisorName: 'Distri Adi Setiawan ., S.Pd., SS',
+  osisAdvisorNip: '19740921 200212 1 005',
+
+  committeeLeaderTitle: 'Ketua Panitia / MPK:',
   committeeLeaderName: 'Kurnia Ramadhan (Ketua MPK)',
+  committeeLeaderNis: '20241098',
+
+  witness1Title: 'Saksi Paslon 01:',
+  witness1Name: 'Dimas Bagus Pratama',
+  witness1Role: 'Saksi Terdaftar',
+
+  witness2Title: 'Saksi Paslon 02 & 03:',
+  witness2Name: 'Rizka Amalia Putri',
+  witness2Role: 'Saksi Terdaftar',
+
+  witness3Title: 'Saksi Tambahan:',
+  witness3Name: '',
+  witness3Role: '',
+
   startTime: '2026-09-08T07:30',
   endTime: '2026-09-08T14:30',
   allowLiveCount: true,

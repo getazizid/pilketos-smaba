@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldAlert, Check, Clock, Building, AlertTriangle, Lock, KeyRound, Smartphone, ShieldCheck } from 'lucide-react';
+import { 
+  ShieldAlert, 
+  Check, 
+  Clock, 
+  Building, 
+  AlertTriangle, 
+  Lock, 
+  KeyRound, 
+  Smartphone, 
+  ShieldCheck 
+} from 'lucide-react';
 
 export function ElectionSettings({ onAddToast }) {
   const { settings, updateSettings, resetAllVotes } = useElection();
@@ -21,11 +31,21 @@ export function ElectionSettings({ onAddToast }) {
 
   const [resetConfirmText, setResetConfirmText] = useState('');
 
+  // Sinkronkan form jika settings di context diperbarui (misal dari Firestore / modal)
+  useEffect(() => {
+    setGeneralForm({ ...settings });
+    setSecurityForm({
+      requireTpsCode: settings.requireTpsCode ?? true,
+      tpsSecurityCode: settings.tpsSecurityCode || 'SMABA-TPS-2026',
+      blockMobile: settings.blockMobile ?? true
+    });
+  }, [settings]);
+
   const handleSaveGeneral = (e) => {
     e.preventDefault();
     if (!isSuperAdmin) return;
     updateSettings(generalForm);
-    if (onAddToast) onAddToast('Pengaturan pemilihan berhasil diperbarui.', 'success');
+    if (onAddToast) onAddToast('Informasi pemilihan & sekolah berhasil diperbarui.', 'success');
   };
 
   const handleSaveSecurity = (e) => {
@@ -58,7 +78,7 @@ export function ElectionSettings({ onAddToast }) {
           Akses Khusus Super Admin
         </h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.92rem' }}>
-          Halaman Pengaturan Pemilihan, Konfigurasi Server Cloud, dan Reset Perolehan Suara hanya dapat diakses oleh <strong>Super Admin</strong> demi menjaga keamanan sistem pemilihan.
+          Halaman Pengaturan Pemilihan, Berita Acara, dan Reset Perolehan Suara hanya dapat diakses oleh <strong>Super Admin</strong> demi menjaga keamanan sistem pemilihan.
         </p>
         <div style={{ display: 'inline-block', padding: '0.5rem 1.2rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: '#fca5a5', fontSize: '0.85rem' }}>
           Peran aktif Anda: <strong>{userRole || 'Tidak Terautentikasi'}</strong>
@@ -68,18 +88,18 @@ export function ElectionSettings({ onAddToast }) {
   }
 
   return (
-    <div style={{ maxWidth: '900px' }}>
+    <div style={{ maxWidth: '960px' }}>
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
-          Pengaturan Pemilihan &amp; Server
+          Pengaturan Pemilihan
         </h2>
-        <p style={{ fontSize: '0.9rem' }}>
-          Kelola status operasional TPS, keamanan bilik suara, data sekolah, dan reset suara
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          Kelola status operasional TPS, data sekolah, keamanan bilik, dan reset suara
         </p>
       </div>
 
-      {/* Status Bilik Suara Cepat */}
+      {/* 1. Status Bilik Suara Cepat */}
       <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
         <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Clock size={20} color="var(--gold)" />
@@ -114,7 +134,7 @@ export function ElectionSettings({ onAddToast }) {
         </div>
       </div>
 
-      {/* Pengaturan Keamanan Bilik Suara & Pembatasan Akses TPS */}
+      {/* 2. Pengaturan Keamanan Bilik Suara & Pembatasan Akses TPS */}
       <form onSubmit={handleSaveSecurity} className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', border: '1.5px solid #fed7aa' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <h3 style={{ fontSize: '1.2rem', color: '#9a3412', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
@@ -257,11 +277,11 @@ export function ElectionSettings({ onAddToast }) {
         )}
       </form>
 
-      {/* Pengaturan Informasi Sekolah & Pemilu */}
+      {/* 3. Pengaturan Informasi Umum Sekolah & TPS */}
       <form onSubmit={handleSaveGeneral} className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
         <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Building size={20} color="var(--primary-light)" />
-          <span>Informasi Sekolah &amp; Pejabat Berita Acara</span>
+          <span>Informasi Umum Sekolah &amp; TPS</span>
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
@@ -309,40 +329,17 @@ export function ElectionSettings({ onAddToast }) {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Nama Kepala Sekolah</label>
+          <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <label className="form-label">Alamat Lengkap Sekolah</label>
             <input
               type="text"
               className="form-input"
-              value={generalForm.headmasterName}
-              onChange={(e) => setGeneralForm({ ...generalForm, headmasterName: e.target.value })}
-              required
+              value={generalForm.schoolAddress}
+              onChange={(e) => setGeneralForm({ ...generalForm, schoolAddress: e.target.value })}
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Nama Pembina OSIS</label>
-            <input
-              type="text"
-              className="form-input"
-              value={generalForm.osisAdvisorName}
-              onChange={(e) => setGeneralForm({ ...generalForm, osisAdvisorName: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Ketua Panitia / MPK</label>
-            <input
-              type="text"
-              className="form-input"
-              value={generalForm.committeeLeaderName}
-              onChange={(e) => setGeneralForm({ ...generalForm, committeeLeaderName: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
+          <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label className="form-label">URL Logo Sekolah</label>
             <input
               type="text"
@@ -353,27 +350,17 @@ export function ElectionSettings({ onAddToast }) {
           </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Alamat Lengkap Sekolah</label>
-          <input
-            type="text"
-            className="form-input"
-            value={generalForm.schoolAddress}
-            onChange={(e) => setGeneralForm({ ...generalForm, schoolAddress: e.target.value })}
-          />
-        </div>
-
         {isSuperAdmin && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
             <button type="submit" className="btn btn-primary">
               <Check size={18} />
-              <span>Simpan Informasi Pemilihan</span>
+              <span>Simpan Informasi Sekolah &amp; TPS</span>
             </button>
           </div>
         )}
       </form>
 
-      {/* Danger Zone: Reset Perolehan Suara */}
+      {/* 4. Danger Zone: Reset Perolehan Suara */}
       {isSuperAdmin && (
         <div className="glass-panel" style={{
           padding: '2rem',

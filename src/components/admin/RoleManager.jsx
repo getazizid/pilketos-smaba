@@ -157,7 +157,7 @@ export function RoleManager({ onAddToast }) {
             <span>SUPER ADMIN</span>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Akses tak terbatas: konfigurasi voting, paslon OSIS, DPT siswa, reset suara, berita acara, hak akses, dan pengaturan server.
+            Akses tak terbatas: konfigurasi voting, paslon OSIS, DPT siswa, reset suara, berita acara, hak akses, dan pengaturan sistem.
           </p>
         </div>
 
