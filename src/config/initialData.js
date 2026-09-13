@@ -7,30 +7,30 @@ export const INITIAL_CANDIDATES = [
   {
     id: 'paslon-1',
     number: 1,
-    chairmanName: 'Muhammad Rizky Pratama',
-    viceChairmanName: 'Aisyah Putri Maharani',
-    chairmanClass: 'XI-1',
-    viceChairmanClass: 'X-3',
+    chairmanName: 'Ayasha Ghassani S',
+    viceChairmanName: 'Najma Aulia A',
+    chairmanClass: 'XI',
+    viceChairmanClass: 'X',
     photoUrl: '/assets/paslon1.jpg',
     voteCount: 0
   },
   {
     id: 'paslon-2',
     number: 2,
-    chairmanName: 'Galih Bayu Setyo',
-    viceChairmanName: 'Nabila Zahra Khairunnisa',
-    chairmanClass: 'XI-4',
-    viceChairmanClass: 'XI-7',
+    chairmanName: 'Aprillia Kusuma D',
+    viceChairmanName: 'Rafif Bintang A',
+    chairmanClass: 'XI',
+    viceChairmanClass: 'X',
     photoUrl: '/assets/paslon2.jpg',
     voteCount: 0
   },
   {
     id: 'paslon-3',
     number: 3,
-    chairmanName: 'Kirana Larasati Wijaya',
-    viceChairmanName: 'Dimas Arya Pamungkas',
-    chairmanClass: 'XI-9',
-    viceChairmanClass: 'X-5',
+    chairmanName: 'Fahriafinka Awadullah',
+    viceChairmanName: 'Alvaro Axelle A',
+    chairmanClass: 'XI',
+    viceChairmanClass: 'X',
     photoUrl: '/assets/paslon3.jpg',
     voteCount: 0
   }
