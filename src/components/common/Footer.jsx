@@ -6,9 +6,9 @@ export function Footer() {
     <footer className="no-print" style={{
       borderTop: '1px solid var(--border-subtle)',
       background: '#ffffff',
-      padding: '1.75rem 0',
+      padding: '1.5rem 0',
       marginTop: 'auto',
-      fontSize: '0.85rem',
+      fontSize: '0.825rem',
       color: 'var(--text-muted)'
     }}>
       <div className="container" style={{
@@ -16,21 +16,23 @@ export function Footer() {
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '1rem'
+        gap: '0.75rem',
+        textAlign: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <ShieldCheck size={18} color="var(--emerald)" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', flex: '1 1 280px' }}>
+          <ShieldCheck size={18} color="var(--emerald)" style={{ flexShrink: 0 }} />
           <span>
-            Sistem E-Voting Pilketos SMAN 1 Batu 2026 &bull; Asas <strong>LUBER JURDIL</strong>
+            E-Voting Pilketos SMAN 1 Batu 2026 &bull; Asas <strong>LUBER JURDIL</strong>
           </span>
         </div>
 
-        <div>
+        <div style={{ flex: '1 1 280px' }}>
           <span>
-            Organisasi Siswa Intra Sekolah (OSIS) &amp; MPK SMA Negeri 1 Batu &copy; 2026
+            OSIS &amp; MPK SMA Negeri 1 Batu &copy; 2026 &bull; Suara Generasi Juara
           </span>
         </div>
       </div>
     </footer>
   );
 }
+

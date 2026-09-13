@@ -55,8 +55,8 @@ export function AdminDashboard({ onNavigate }) {
     <div>
       {/* Top Banner / Welcome */}
       <div className="glass-panel" style={{
-        padding: '1.5rem 2rem',
-        marginBottom: '2rem',
+        padding: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+        marginBottom: '1.5rem',
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
@@ -65,34 +65,34 @@ export function AdminDashboard({ onNavigate }) {
         background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)',
         border: '1.5px solid #bfdbfe'
       }}>
-        <div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--gold)', fontWeight: '700', textTransform: 'uppercase' }}>
+        <div style={{ flex: '1 1 260px' }}>
+          <div style={{ fontSize: '0.78rem', color: 'var(--gold)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {settings.eventName} &bull; Periode {settings.period}
           </div>
-          <h2 style={{ fontSize: '1.6rem', color: '#0f172a', marginTop: '0.2rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.25rem, 3vw, 1.6rem)', color: '#0f172a', marginTop: '0.2rem' }}>
             Halo, {adminUser?.name || 'Staf Panitia'}!
           </h2>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
             Hak Akses: <span className="badge badge-purple">{adminUser?.role}</span> &bull; {settings.tpsCode}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
           <button 
             type="button" 
-            className="btn btn-gold" 
+            className="btn btn-gold btn-sm" 
             onClick={() => onNavigate('projector')}
           >
-            <Tv size={17} />
+            <Tv size={16} />
             <span>Mode Layar Monitoring</span>
           </button>
           
           <button 
             type="button" 
-            className="btn btn-outline" 
+            className="btn btn-outline btn-sm" 
             onClick={() => onNavigate('report')}
           >
-            <FileText size={17} />
+            <FileText size={16} />
             <span>Berita Acara</span>
           </button>
         </div>
@@ -102,12 +102,12 @@ export function AdminDashboard({ onNavigate }) {
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--primary-subtle)', color: 'var(--primary-light)' }}>
-            <Users size={28} />
+            <Users size={26} />
           </div>
           <div>
             <div className="stat-val">{formatNumber(totalDpt)}</div>
-            <div className="stat-title">Daftar Pemilih Tetap (DPT)</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <div className="stat-title">Daftar Pemilih Tetap</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
               <span>Siswa: {dptBreakdown?.siswa ?? 0}</span> • 
               <span>Guru: {dptBreakdown?.guru ?? 0}</span> • 
               <span>Tendik: {dptBreakdown?.tendik ?? 0}</span>
@@ -117,7 +117,7 @@ export function AdminDashboard({ onNavigate }) {
 
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--emerald-subtle)', color: 'var(--emerald)' }}>
-            <Vote size={28} />
+            <Vote size={26} />
           </div>
           <div>
             <div className="stat-val">{formatNumber(totalVotes)}</div>
@@ -127,7 +127,7 @@ export function AdminDashboard({ onNavigate }) {
 
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--gold-subtle)', color: 'var(--gold)' }}>
-            <Percent size={28} />
+            <Percent size={26} />
           </div>
           <div>
             <div className="stat-val">{participationPercentage}%</div>
@@ -137,7 +137,7 @@ export function AdminDashboard({ onNavigate }) {
 
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5' }}>
-            <Clock size={28} />
+            <Clock size={26} />
           </div>
           <div>
             <div className="stat-val">{formatNumber(totalUnvoted)}</div>
@@ -146,21 +146,26 @@ export function AdminDashboard({ onNavigate }) {
         </div>
       </div>
 
-      {/* Quick Count & Breakdown Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+      {/* Quick Count & Breakdown Grid (Fully Responsive) */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', 
+        gap: 'clamp(1rem, 2vw, 1.75rem)', 
+        marginBottom: '2rem' 
+      }}>
         {/* Real-time Quick Count Paslon */}
-        <div className="glass-panel" style={{ padding: '1.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div className="glass-panel" style={{ padding: 'clamp(1rem, 2.5vw, 1.75rem)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <TrendingUp size={22} color="var(--primary)" />
-              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Quick Count Suara Paslon</h3>
+              <h3 style={{ fontSize: '1.18rem', color: 'var(--text-primary)' }}>Quick Count Suara Paslon</h3>
             </div>
             <span className="badge badge-green">
               <span className="status-dot"></span> LIVE
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {candidates.map((cand) => {
               const votePct = totalVotes > 0 ? ((cand.voteCount / totalVotes) * 100).toFixed(1) : 0;
               const isLeading = sortedCandidates[0]?.id === cand.id && cand.voteCount > 0;
@@ -170,31 +175,31 @@ export function AdminDashboard({ onNavigate }) {
                   background: '#ffffff',
                   border: `1.5px solid ${isLeading ? 'var(--gold)' : 'var(--border-subtle)'}`,
                   borderRadius: 'var(--radius-md)',
-                  padding: '1.25rem',
+                  padding: '1rem',
                   position: 'relative',
                   boxShadow: isLeading ? '0 4px 14px rgba(217, 119, 6, 0.15)' : 'none'
                 }}>
                   {isLeading && (
                     <div style={{
                       position: 'absolute',
-                      right: '1rem',
-                      top: '1rem',
-                      fontSize: '0.75rem',
+                      right: '0.85rem',
+                      top: '0.85rem',
+                      fontSize: '0.72rem',
                       fontWeight: '800',
                       color: 'var(--gold)',
                       background: 'var(--gold-subtle)',
-                      padding: '0.2rem 0.6rem',
+                      padding: '0.15rem 0.55rem',
                       borderRadius: 'var(--radius-pill)',
                       border: '1px solid var(--border-gold)'
                     }}>
-                      ⭐ SEMENTARA UNGGUL
+                      ⭐ UNGGUL
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.85rem' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                     <div style={{
-                      width: '40px',
-                      height: '40px',
+                      width: '38px',
+                      height: '38px',
                       borderRadius: '50%',
                       background: 'var(--primary-subtle)',
                       color: 'var(--primary-light)',
@@ -202,26 +207,26 @@ export function AdminDashboard({ onNavigate }) {
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: '800',
-                      fontSize: '1.1rem',
+                      fontSize: '1.05rem',
                       flexShrink: 0
                     }}>
                       #{cand.number}
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '1.05rem' }}>
+                    <div style={{ flex: '1 1 180px' }}>
+                      <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.98rem' }}>
                         {cand.chairmanName} &amp; {cand.viceChairmanName}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                         Kelas {cand.chairmanClass} &bull; {cand.viceChairmanClass}
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0f172a' }}>
-                        {cand.voteCount || 0} <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-muted)' }}>suara</span>
+                    <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a' }}>
+                        {cand.voteCount || 0} <span style={{ fontSize: '0.8rem', fontWeight: '500', color: 'var(--text-muted)' }}>suara</span>
                       </div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--primary-light)' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary-light)' }}>
                         {votePct}%
                       </div>
                     </div>
@@ -230,8 +235,8 @@ export function AdminDashboard({ onNavigate }) {
                   {/* Progress Bar */}
                   <div style={{
                     width: '100%',
-                    height: '10px',
-                    background: 'rgba(255, 255, 255, 0.08)',
+                    height: '8px',
+                    background: '#f1f5f9',
                     borderRadius: 'var(--radius-pill)',
                     overflow: 'hidden'
                   }}>

@@ -302,55 +302,55 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '1rem',
-        marginBottom: '1.5rem'
+        marginBottom: '1.25rem'
       }}>
         <div>
-          <h2 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
             Daftar Pemilih Tetap (DPT) &amp; Token
           </h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             Kelola data pemilih siswa, guru, dan tenaga kependidikan (Tendik), token rahasia, impor CSV, dan cetak kartu
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
             type="button"
-            className="btn btn-gold"
+            className="btn btn-sm btn-gold"
             onClick={onNavigateToPrint}
             title="Cetak Kartu Pemilih Format Siap Potong"
           >
-            <Printer size={17} />
-            <span>Cetak Kartu Pemilih</span>
+            <Printer size={15} />
+            <span>Cetak Kartu</span>
           </button>
 
           <button
             type="button"
-            className="btn btn-outline"
+            className="btn btn-sm btn-outline"
             onClick={() => downloadDptTemplateExcel()}
             title="Unduh Format Template Excel (.xlsx) Resmi & Berwarna"
             style={{ borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
           >
-            <FileSpreadsheet size={17} />
+            <FileSpreadsheet size={15} />
             <span>Template Excel</span>
           </button>
 
           <button
             type="button"
-            className="btn btn-outline"
+            className="btn btn-sm btn-outline"
             onClick={() => exportDptToExcel(students)}
             title="Ekspor Seluruh DPT ke Berkas Excel (.xlsx)"
             disabled={students.length === 0}
           >
-            <Download size={17} />
-            <span>Ekspor Excel</span>
+            <Download size={15} />
+            <span>Ekspor</span>
           </button>
 
           {!isReadOnly && (
             <>
-              <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }} title="Impor Berkas Excel (.xlsx, .xls) atau CSV">
-                <Upload size={17} />
-                <span>Impor Excel</span>
+              <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', margin: 0 }} title="Impor Berkas Excel (.xlsx, .xls) atau CSV">
+                <Upload size={15} />
+                <span>Impor</span>
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
@@ -362,34 +362,34 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
               {isSuperAdmin && (
                 <button
                   type="button"
-                  className="btn btn-outline"
+                  className="btn btn-sm btn-outline hide-mobile"
                   onClick={handleGenerateSampleStudents}
                   title="Generate 15 Pemilih Otomatis (Siswa, Guru, Tendik)"
                 >
-                  <PlusCircle size={16} />
-                  <span>+15 DPT Otomatis</span>
+                  <PlusCircle size={15} />
+                  <span>+15 DPT</span>
                 </button>
               )}
 
               {isSuperAdmin && students.length > 0 && (
                 <button
                   type="button"
-                  className="btn btn-outline"
+                  className="btn btn-sm btn-outline"
                   onClick={handleDeleteAll}
                   style={{ borderColor: '#fca5a5', color: '#dc2626' }}
                   title="Kosongkan seluruh data DPT dari sistem & database cloud"
                 >
-                  <Trash2 size={16} />
-                  <span>Kosongkan DPT</span>
+                  <Trash2 size={15} />
+                  <span>Kosongkan</span>
                 </button>
               )}
 
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-sm btn-primary"
                 onClick={() => openAddModal('SISWA')}
               >
-                <UserPlus size={17} />
+                <UserPlus size={15} />
                 <span>Tambah Pemilih</span>
               </button>
             </>
@@ -397,28 +397,28 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         </div>
       </div>
 
-      {/* Ringkasan Statistik Kategori Pemilih */}
+      {/* Ringkasan Statistik Kategori Pemilih (Responsive 2x2 on mobile, 4-col on desktop) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.5rem'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
+        gap: '0.75rem',
+        marginBottom: '1.25rem'
       }}>
         <div style={{
           background: '#ffffff',
           borderRadius: 'var(--radius-md)',
-          padding: '1rem',
+          padding: '0.85rem 1rem',
           border: '1px solid #e2e8f0',
           borderLeft: '4px solid #2563eb',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
         }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
-            Total Seluruh DPT
+          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+            Total DPT
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#0f172a', marginTop: '0.2rem' }}>
+          <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#0f172a', marginTop: '0.15rem' }}>
             {students.length}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#2563eb', marginTop: '0.15rem' }}>
+          <div style={{ fontSize: '0.72rem', color: '#2563eb' }}>
             Hak Suara Terdaftar
           </div>
         </div>
@@ -426,18 +426,18 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         <div style={{
           background: '#ffffff',
           borderRadius: 'var(--radius-md)',
-          padding: '1rem',
+          padding: '0.85rem 1rem',
           border: '1px solid #e2e8f0',
           borderLeft: '4px solid #3b82f6',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
         }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
             Pemilih Siswa
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#1d4ed8', marginTop: '0.2rem' }}>
+          <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#1d4ed8', marginTop: '0.15rem' }}>
             {totalSiswa ?? students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
             Kelas X, XI, dan XII
           </div>
         </div>
@@ -445,38 +445,38 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         <div style={{
           background: '#ffffff',
           borderRadius: 'var(--radius-md)',
-          padding: '1rem',
+          padding: '0.85rem 1rem',
           border: '1px solid #e2e8f0',
           borderLeft: '4px solid #059669',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
         }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
             Pemilih Guru
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#047857', marginTop: '0.2rem' }}>
+          <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#047857', marginTop: '0.15rem' }}>
             {totalGuru ?? students.filter(s => s.voterType === 'GURU').length}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
-            Dewan Guru / Tenaga Pendidik
+          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+            Dewan Guru SMABA
           </div>
         </div>
 
         <div style={{
           background: '#ffffff',
           borderRadius: 'var(--radius-md)',
-          padding: '1rem',
+          padding: '0.85rem 1rem',
           border: '1px solid #e2e8f0',
           borderLeft: '4px solid #d97706',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
         }}>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>
             Tenaga Kependidikan
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#b45309', marginTop: '0.2rem' }}>
+          <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#b45309', marginTop: '0.15rem' }}>
             {totalTendik ?? students.filter(s => s.voterType === 'TENDIK').length}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
-            Staf TU &amp; Tenaga Kependidikan
+          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+            Staf TU &amp; Karyawan
           </div>
         </div>
       </div>
@@ -499,8 +499,8 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
       )}
 
       {/* Filter & Search Bar */}
-      <div className="glass-panel" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+      <div className="glass-panel" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.85rem', alignItems: 'center' }}>
           {/* Search Box */}
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -604,6 +604,11 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           </div>
         </div>
       )}
+
+      {/* Mobile Swipe Hint */}
+      <div className="swipe-hint">
+        <span>👉 Geser tabel ke samping untuk melihat kolom token &amp; aksi</span>
+      </div>
 
       {/* DPT Table */}
       <div className="table-responsive">

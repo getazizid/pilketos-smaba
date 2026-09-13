@@ -27,42 +27,40 @@ export function QuickCountDisplay({ onBack }) {
   const leadingCandidateId = sortedCandidates[0]?.voteCount > 0 ? sortedCandidates[0]?.id : null;
 
   return (
-    <div style={{
+    <div className="projector-view" style={{
       minHeight: '100vh',
       background: '#f8fafc',
       color: '#0f172a',
-      padding: '2rem 2.5rem',
+      padding: 'clamp(1rem, 2.5vw, 2.5rem)',
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Top Header Bar */}
+      {/* Top Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingBottom: '1.5rem',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        paddingBottom: '1.25rem',
         borderBottom: '2px solid #e2e8f0',
-        marginBottom: '2rem',
-        background: '#ffffff',
-        padding: '1.25rem 2rem',
-        borderRadius: 'var(--radius-xl)',
-        boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
-        border: '1px solid #e2e8f0'
+        marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        {/* Logo & School Name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <img
             src={settings.schoolLogo || '/assets/logo.png'}
             alt="Logo SMAN 1 Batu"
             style={{
-              width: '64px',
-              height: '64px',
+              width: 'clamp(44px, 5vw, 60px)',
+              height: 'clamp(44px, 5vw, 60px)',
               objectFit: 'contain',
               filter: 'drop-shadow(0 3px 8px rgba(0, 0, 0, 0.12))'
             }}
           />
           <div>
             <div style={{
-              fontSize: '0.8rem',
+              fontSize: '0.75rem',
               fontWeight: '800',
               color: '#b45309',
               letterSpacing: '0.08em',
@@ -71,7 +69,7 @@ export function QuickCountDisplay({ onBack }) {
               PENGHITUNGAN SUARA RESMI REAL-TIME (QUICK COUNT)
             </div>
             <h1 style={{
-              fontSize: '2rem',
+              fontSize: 'clamp(1.25rem, 2.5vw, 2rem)',
               fontWeight: '900',
               color: '#0f172a',
               letterSpacing: '-0.02em',
@@ -79,15 +77,15 @@ export function QuickCountDisplay({ onBack }) {
             }}>
               PILKETOS SMAN 1 BATU 2026
             </h1>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               SMA NEGERI 1 BATU &bull; {settings.tpsCode || 'TPS SMAN 1 Batu'}
             </div>
           </div>
         </div>
 
         {/* Status TPS & Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div className="badge badge-green" style={{ fontSize: '0.85rem', padding: '0.45rem 1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <div className="badge badge-green" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
             <span className="status-dot"></span> LIVE MONITORING
           </div>
 
@@ -97,7 +95,7 @@ export function QuickCountDisplay({ onBack }) {
             onClick={toggleFullscreen}
             title="Layar Penuh"
           >
-            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+            {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
             <span className="hide-mobile">{isFullscreen ? 'Kecilkan' : 'Layar Penuh'}</span>
           </button>
 
@@ -107,18 +105,18 @@ export function QuickCountDisplay({ onBack }) {
             onClick={onBack}
             title="Kembali ke Beranda"
           >
-            <ArrowLeft size={16} />
-            <span>Keluar Layar Monitoring</span>
+            <ArrowLeft size={15} />
+            <span>Keluar <span className="hide-mobile">Monitoring</span></span>
           </button>
         </div>
       </div>
 
-      {/* Main Metric Cards */}
+      {/* Main Metric Cards (Responsive 2x2 on Mobile, 4 Across on Desktop/Projector) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '1.5rem',
-        marginBottom: '2.5rem'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))',
+        gap: 'clamp(0.75rem, 2vw, 1.5rem)',
+        marginBottom: 'clamp(1.25rem, 2.5vw, 2.5rem)'
       }}>
         <div style={{
           background: '#ffffff',
@@ -133,10 +131,10 @@ export function QuickCountDisplay({ onBack }) {
           justifyContent: 'space-between'
         }}>
           <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
               Total DPT Terdaftar
             </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#0f172a', marginTop: '0.2rem', lineHeight: '1.1' }}>
+            <div style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: '900', color: '#0f172a', marginTop: '0.2rem', lineHeight: '1.1' }}>
               {formatNumber(totalDpt)}
             </div>
             <div style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: '600', marginTop: '0.25rem' }}>
@@ -228,11 +226,11 @@ export function QuickCountDisplay({ onBack }) {
         </div>
       </div>
 
-      {/* Spectacular Candidate Cards for Projector */}
+      {/* Spectacular Candidate Cards for Projector & Mobile */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: `repeat(${Math.max(candidates.length, 1)}, 1fr)`,
-        gap: '2rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+        gap: 'clamp(1rem, 2.5vw, 2rem)',
         flex: 1
       }}>
         {candidates.map((cand) => {
@@ -278,7 +276,7 @@ export function QuickCountDisplay({ onBack }) {
               )}
 
               {/* Foto Paslon */}
-              <div style={{ height: '360px', position: 'relative', overflow: 'hidden', background: '#e2e8f0' }}>
+              <div style={{ height: 'clamp(240px, 35vh, 360px)', position: 'relative', overflow: 'hidden', background: '#e2e8f0' }}>
                 <img
                   src={cand.photoUrl || '/assets/paslon1.jpg'}
                   alt={`Paslon ${cand.number}`}
