@@ -10,9 +10,10 @@ import {
   Tv, 
   TrendingUp, 
   ShieldAlert, 
+  ShieldCheck,
   FileText 
 } from 'lucide-react';
-import { formatNumber, calculatePercentage, formatIndonesianDate, sortClassNames, getStandardSchoolClasses } from '../../utils/helpers';
+import { formatNumber, formatIndonesianDate, sortClassNames, getStandardSchoolClasses } from '../../utils/helpers';
 
 export function AdminDashboard({ onNavigate }) {
   const { 
@@ -20,6 +21,8 @@ export function AdminDashboard({ onNavigate }) {
     students, 
     totalDpt, 
     totalVotes, 
+    totalVotedStudents,
+    isTallyValid,
     participationPercentage, 
     totalUnvoted, 
     auditLogs,
@@ -186,6 +189,64 @@ export function AdminDashboard({ onNavigate }) {
             <div className="stat-val">{formatNumber(totalUnvoted)}</div>
             <div className="stat-title">Belum Menggunakan Hak</div>
           </div>
+        </div>
+      </div>
+
+      {/* Status Rekonsiliasi & Integritas Suara (JURDIL) */}
+      <div style={{
+        background: isTallyValid ? 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)' : '#fef2f2',
+        border: `1.5px solid ${isTallyValid ? '#bbf7d0' : '#fecaca'}`,
+        borderRadius: 'var(--radius-lg)',
+        padding: '0.9rem 1.25rem',
+        marginBottom: '1.75rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '0.75rem',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '50%',
+            background: isTallyValid ? '#dcfce7' : '#fee2e2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isTallyValid ? '#15803d' : '#dc2626'
+          }}>
+            {isTallyValid ? <ShieldCheck size={22} /> : <ShieldAlert size={22} />}
+          </div>
+          <div>
+            <div style={{ fontSize: '0.9rem', fontWeight: '700', color: isTallyValid ? '#166534' : '#991b1b' }}>
+              {isTallyValid 
+                ? 'Audit Integritas Sistem: Suara Sah 100% Sesuai & Tervalidasi (JURDIL)' 
+                : 'Peringatan Anomali Data: Terdapat Ketidaksesuaian Suara!'}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: isTallyValid ? '#15803d' : '#b91c1c' }}>
+              {isTallyValid 
+                ? `Total Suara Sah Paslon (${formatNumber(totalVotes)} suara) = Total Pemilih Mencoblos (${formatNumber(totalVotedStudents ?? totalVotes)} orang). Tidak ada suara ganda atau suara siluman.`
+                : `Total suara paslon (${formatNumber(totalVotes)}) tidak sama dengan pemilih yang mencoblos (${formatNumber(totalVotedStudents)} orang). Segera verifikasi log.`}
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          padding: '0.35rem 0.85rem',
+          borderRadius: 'var(--radius-pill)',
+          background: isTallyValid ? '#dcfce7' : '#fee2e2',
+          border: `1px solid ${isTallyValid ? '#86efac' : '#fca5a5'}`,
+          fontSize: '0.75rem',
+          fontWeight: '700',
+          color: isTallyValid ? '#15803d' : '#b91c1c',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem'
+        }}>
+          <span className="status-dot" style={{ background: isTallyValid ? '#16a34a' : '#dc2626' }}></span>
+          <span>{isTallyValid ? 'STATUS: 100% VALID & SINKRON' : 'STATUS: ANOMALI PERIKSA'}</span>
         </div>
       </div>
 

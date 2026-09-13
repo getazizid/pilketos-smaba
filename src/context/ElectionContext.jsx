@@ -11,12 +11,12 @@ import {
   doc, 
   onSnapshot, 
   getDocs,
-  updateDoc, 
   increment, 
   setDoc, 
   deleteDoc,
   writeBatch,
-  serverTimestamp 
+  serverTimestamp,
+  runTransaction 
 } from 'firebase/firestore';
 
 const ElectionContext = createContext();
@@ -200,41 +200,64 @@ export function ElectionProvider({ children }) {
   };
 
   // PENCATATAN SUARA (VOTING TRANSACTION)
-  // Menjaga Asas Kerahasiaan Suara (Secret Ballot)
+  // Menjaga Asas Kerahasiaan Suara (Secret Ballot) & Asas Jujur Adil (Anti Double-Vote)
   const submitVote = async (studentId, candidateId) => {
     const timestamp = new Date().toISOString();
 
     if (isFirebaseConfigured && db) {
       try {
-        // 1. Update status siswa (tidak menyimpan siapa yang dipilih)
-        await updateDoc(doc(db, 'students', studentId), {
-          hasVoted: true,
-          votedAt: serverTimestamp()
-        });
+        await runTransaction(db, async (transaction) => {
+          const studentRef = doc(db, 'students', studentId);
+          const studentSnap = await transaction.get(studentRef);
 
-        // 2. Increment perolehan suara paslon secara atomic
-        await updateDoc(doc(db, 'candidates', candidateId), {
-          voteCount: increment(1)
+          if (!studentSnap.exists()) {
+            throw new Error('Data pemilih tidak ditemukan dalam DPT.');
+          }
+
+          if (studentSnap.data().hasVoted) {
+            throw new Error('Hak suara atas pemilih ini sudah pernah digunakan.');
+          }
+
+          const candRef = doc(db, 'candidates', candidateId);
+          const candSnap = await transaction.get(candRef);
+          if (!candSnap.exists()) {
+            throw new Error('Pasangan calon tidak ditemukan.');
+          }
+
+          // 1. Tandai pemilih telah memilih
+          transaction.update(studentRef, {
+            hasVoted: true,
+            votedAt: serverTimestamp()
+          });
+
+          // 2. Increment perolehan suara paslon secara atomic
+          transaction.update(candRef, {
+            voteCount: increment(1)
+          });
         });
       } catch (err) {
         console.error('Error saat submitVote di Firebase:', err);
+        throw err;
       }
+      // CATATAN PENTING: Saat Firebase aktif, listener onSnapshot(candidates) & onSnapshot(students)
+      // secara otomatis memperbarui state di semua client secara real-time.
+      // Tidak melakukan penambahan manual di state lokal agar tidak terjadi lonjakan angka ganda sesaat.
+    } else {
+      // Update state lokal khusus mode offline tanpa Firebase
+      setStudents(prev => prev.map(s => {
+        if (s.id === studentId) {
+          return { ...s, hasVoted: true, votedAt: timestamp };
+        }
+        return s;
+      }));
+
+      setCandidates(prev => prev.map(c => {
+        if (c.id === candidateId) {
+          return { ...c, voteCount: (c.voteCount || 0) + 1 };
+        }
+        return c;
+      }));
     }
-
-    // Update state lokal
-    setStudents(prev => prev.map(s => {
-      if (s.id === studentId) {
-        return { ...s, hasVoted: true, votedAt: timestamp };
-      }
-      return s;
-    }));
-
-    setCandidates(prev => prev.map(c => {
-      if (c.id === candidateId) {
-        return { ...c, voteCount: (c.voteCount || 0) + 1 };
-      }
-      return c;
-    }));
 
     addLog(`1 hak suara sah berhasil dicoblos di TPS.`, 'SUCCESS');
     return { success: true, timestamp };
@@ -578,7 +601,9 @@ export function ElectionProvider({ children }) {
 
   // Statistik Real-time
   const totalDpt = students.length;
+  const totalVotedStudents = students.filter(s => s.hasVoted).length;
   const totalVotes = candidates.reduce((acc, c) => acc + (c.voteCount || 0), 0);
+  const isTallyValid = totalVotes === totalVotedStudents;
   const participationPercentage = totalDpt > 0 ? ((totalVotes / totalDpt) * 100).toFixed(1) : 0;
   const totalUnvoted = Math.max(0, totalDpt - totalVotes);
 
@@ -602,6 +627,8 @@ export function ElectionProvider({ children }) {
         auditLogs,
         totalDpt,
         totalVotes,
+        totalVotedStudents,
+        isTallyValid,
         participationPercentage,
         totalUnvoted,
         totalSiswa,
