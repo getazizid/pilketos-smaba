@@ -32,6 +32,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   } = useElection();
   const { userRole } = useAuth();
 
+  const isSuperAdmin = userRole === 'ADMIN';
   const isReadOnly = userRole === 'SAKSI';
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -191,7 +192,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   };
 
   const handleDelete = (student) => {
-    if (isReadOnly) return;
+    if (!isSuperAdmin) return;
     if (window.confirm(`Hapus ${student.name} dari DPT?`)) {
       deleteStudent(student.id);
       setSelectedIds(prev => prev.filter(id => id !== student.id));
@@ -219,7 +220,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   };
 
   const handleDeleteSelected = async () => {
-    if (isReadOnly || selectedIds.length === 0) return;
+    if (!isSuperAdmin || selectedIds.length === 0) return;
 
     const count = selectedIds.length;
     if (window.confirm(`PERINGATAN HAPUS MASSAL:\n\nApakah Anda yakin ingin menghapus ${count} siswa terpilih dari DPT dan database Cloud Firestore? Tindakan ini tidak dapat dibatalkan.`)) {
@@ -230,7 +231,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   };
 
   const handleDeleteAll = async () => {
-    if (isReadOnly || students.length === 0) return;
+    if (!isSuperAdmin || students.length === 0) return;
 
     if (window.confirm(`PERINGATAN KOSONGKAN DPT:\n\nApakah Anda yakin ingin MENGHAPUS SEMUA ${students.length} data siswa DPT dari sistem dan database Cloud Firestore?\n\nTindakan ini akan mengosongkan seluruh daftar pemilih agar Anda dapat memasukkan data DPT baru.`)) {
       await deleteAllStudents();
@@ -293,17 +294,19 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                 />
               </label>
 
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={handleGenerateSampleStudents}
-                title="Generate 15 Siswa Otomatis"
-              >
-                <PlusCircle size={16} />
-                <span>+15 Siswa Otomatis</span>
-              </button>
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleGenerateSampleStudents}
+                  title="Generate 15 Siswa Otomatis"
+                >
+                  <PlusCircle size={16} />
+                  <span>+15 Siswa Otomatis</span>
+                </button>
+              )}
 
-              {students.length > 0 && (
+              {isSuperAdmin && students.length > 0 && (
                 <button
                   type="button"
                   className="btn btn-outline"
@@ -328,6 +331,23 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           )}
         </div>
       </div>
+
+      {isReadOnly && (
+        <div style={{
+          background: 'rgba(59, 130, 246, 0.08)',
+          border: '1px solid rgba(59, 130, 246, 0.25)',
+          borderRadius: 'var(--radius-md)',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.5rem',
+          fontSize: '0.85rem',
+          color: 'var(--primary-light)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem'
+        }}>
+          <span>Mode Pantau Saksi: Anda memiliki akses membaca data DPT untuk verifikasi transparansi. Perubahan dan penghapusan data dinonaktifkan.</span>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="glass-panel" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
@@ -379,7 +399,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
       </div>
 
       {/* Action Bar Hapus Terpilih Centang */}
-      {selectedIds.length > 0 && !isReadOnly && (
+      {selectedIds.length > 0 && isSuperAdmin && (
         <div style={{
           background: '#fef2f2',
           border: '1px solid #fecaca',
@@ -426,7 +446,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
         <table className="data-table">
           <thead>
             <tr>
-              {!isReadOnly && (
+              {isSuperAdmin && (
                 <th style={{ width: '42px', textAlign: 'center' }}>
                   <input
                     type="checkbox"
@@ -493,7 +513,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
             ) : (
               filteredStudents.map((s, idx) => (
                 <tr key={s.id} style={{ background: selectedIds.includes(s.id) ? 'rgba(59, 130, 246, 0.05)' : undefined }}>
-                  {!isReadOnly && (
+                  {isSuperAdmin && (
                     <td style={{ textAlign: 'center' }}>
                       <input
                         type="checkbox"
@@ -563,15 +583,17 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                         >
                           <Edit2 size={14} />
                         </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-danger"
-                          onClick={() => handleDelete(s)}
-                          title="Hapus dari DPT"
-                          style={{ padding: '0.35rem 0.6rem' }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {isSuperAdmin && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(s)}
+                            title="Hapus dari DPT"
+                            style={{ padding: '0.35rem 0.6rem' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}

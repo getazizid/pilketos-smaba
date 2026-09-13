@@ -90,6 +90,23 @@ export function ElectionSettings({ onAddToast }) {
     if (onAddToast) onAddToast('Seluruh suara dan status memilih telah di-reset ke 0.', 'error');
   };
 
+  if (!isSuperAdmin) {
+    return (
+      <div className="glass-panel" style={{ padding: '3rem 2rem', textAlign: 'center', maxWidth: '600px', margin: '2rem auto' }}>
+        <ShieldAlert size={56} color="var(--crimson)" style={{ margin: '0 auto 1rem', display: 'block' }} />
+        <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+          Akses Khusus Super Admin
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.92rem' }}>
+          Halaman Pengaturan Pemilihan, Konfigurasi Server Cloud, dan Reset Perolehan Suara hanya dapat diakses oleh <strong>Super Admin</strong> demi menjaga keamanan sistem pemilihan.
+        </p>
+        <div style={{ display: 'inline-block', padding: '0.5rem 1.2rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: '#fca5a5', fontSize: '0.85rem' }}>
+          Peran aktif Anda: <strong>{userRole || 'Tidak Terautentikasi'}</strong>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: '900px' }}>
       {/* Header */}

@@ -38,7 +38,7 @@ export function AdminLogin({ onLoginSuccess }) {
       saksi: 'saksi2026'
     };
 
-    const expectedPass = validPasswords[cleanUser] || '123456';
+    const expectedPass = matchedUser?.password || validPasswords[cleanUser] || '123456';
 
     if (!matchedUser || cleanPass !== expectedPass) {
       setErrorMsg('Username atau Password staf salah. Silakan coba kembali.');

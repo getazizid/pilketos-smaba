@@ -8,7 +8,7 @@ export function CandidateManager({ onAddToast }) {
   const { candidates, addCandidate, updateCandidate, deleteCandidate } = useElection();
   const { userRole } = useAuth();
 
-  const isReadOnly = userRole === 'SAKSI';
+  const isReadOnly = userRole !== 'ADMIN';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState(null);
@@ -94,10 +94,10 @@ export function CandidateManager({ onAddToast }) {
       }}>
         <div>
           <h2 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
-            Manajemen Pasangan Calon (Paslon)
+            {isReadOnly ? 'Daftar Profil Pasangan Calon (Paslon)' : 'Manajemen Pasangan Calon (Paslon)'}
           </h2>
           <p style={{ fontSize: '0.9rem' }}>
-            Kelola data calon Ketua OSIS dan Wakil Ketua OSIS SMAN 1 Batu Periode 2026/2027
+            Data resmi calon Ketua OSIS dan Wakil Ketua OSIS SMAN 1 Batu Periode 2026/2027
           </p>
         </div>
 
@@ -111,19 +111,19 @@ export function CandidateManager({ onAddToast }) {
 
       {isReadOnly && (
         <div style={{
-          background: 'rgba(245, 158, 11, 0.12)',
-          border: '1px solid var(--border-gold)',
+          background: 'rgba(59, 130, 246, 0.08)',
+          border: '1px solid rgba(59, 130, 246, 0.25)',
           borderRadius: 'var(--radius-md)',
           padding: '0.85rem 1.25rem',
           marginBottom: '1.5rem',
           fontSize: '0.85rem',
-          color: 'var(--gold)',
+          color: 'var(--primary-light)',
           display: 'flex',
           alignItems: 'center',
           gap: '0.75rem'
         }}>
           <AlertCircle size={18} />
-          <span>Anda masuk sebagai Saksi (Mode Baca Saja). Perubahan data kandidat dinonaktifkan.</span>
+          <span>Mode Pantau: Anda masuk sebagai <strong>{userRole || 'Saksi'}</strong> (Mode Baca Saja). Wewenang menambah, mengedit, atau menghapus Paslon hanya dimiliki oleh Super Admin.</span>
         </div>
       )}
 
