@@ -16,10 +16,11 @@ import {
   Edit2,
   GraduationCap,
   Briefcase,
-  Users
+  Users,
+  FileSpreadsheet
 } from 'lucide-react';
 import { generateVoterToken } from '../../utils/tokenGenerator';
-import { exportDptToCsv, parseDptCsv } from '../../utils/exportImport';
+import { downloadDptTemplateExcel, exportDptToExcel, parseDptExcelFile } from '../../utils/excelService';
 import { Modal } from '../common/Modal';
 
 export function StudentManager({ onNavigateToPrint, onAddToast }) {
@@ -183,34 +184,32 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     if (onAddToast) onAddToast(`Berhasil men-generate 15 DPT (10 Siswa, 3 Guru, 2 Tendik) dengan token acak.`, 'success');
   };
 
-  // CSV Import handler
-  const handleCsvImport = (e) => {
+  // Excel / CSV Import handler
+  const handleExcelImport = async (e) => {
     if (isReadOnly) return;
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const text = event.target.result;
-        const parsed = parseDptCsv(text);
-        if (parsed.length > 0) {
-          const withTokens = parsed.map(s => ({
-            ...s,
-            voterType: s.voterType || 'SISWA',
-            token: s.token || generateVoterToken()
-          }));
-          addBulkStudents(withTokens);
-          if (onAddToast) onAddToast(`Berhasil mengimpor ${withTokens.length} data DPT dari file CSV.`, 'success');
-        } else {
-          alert('Format CSV tidak valid atau berkas kosong.');
-        }
-      } catch (err) {
-        alert('Gagal memproses berkas CSV: ' + err.message);
+    try {
+      if (onAddToast) onAddToast(`Membaca berkas ${file.name}...`, 'info');
+      const parsed = await parseDptExcelFile(file);
+      if (parsed && parsed.length > 0) {
+        const withTokens = parsed.map(s => ({
+          ...s,
+          voterType: s.voterType || 'SISWA',
+          token: s.token || generateVoterToken()
+        }));
+        await addBulkStudents(withTokens);
+        if (onAddToast) onAddToast(`Berhasil mengimpor ${withTokens.length} data pemilih DPT dari file Excel.`, 'success');
+      } else {
+        alert('Tidak ada data valid yang ditemukan di berkas Excel. Pastikan berkas memiliki kolom NISN/NIP dan Nama.');
       }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+    } catch (err) {
+      console.error('Gagal impor Excel:', err);
+      alert('Gagal memproses berkas Excel: ' + err.message);
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const handleResetVote = (student) => {
@@ -328,23 +327,35 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           <button
             type="button"
             className="btn btn-outline"
-            onClick={() => exportDptToCsv(students)}
-            title="Ekspor Seluruh DPT ke file CSV/Excel"
+            onClick={() => downloadDptTemplateExcel()}
+            title="Unduh Format Template Excel (.xlsx) Resmi & Berwarna"
+            style={{ borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
+          >
+            <FileSpreadsheet size={17} />
+            <span>Template Excel</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => exportDptToExcel(students)}
+            title="Ekspor Seluruh DPT ke Berkas Excel (.xlsx)"
+            disabled={students.length === 0}
           >
             <Download size={17} />
-            <span>Ekspor CSV</span>
+            <span>Ekspor Excel</span>
           </button>
 
           {!isReadOnly && (
             <>
-              <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
+              <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }} title="Impor Berkas Excel (.xlsx, .xls) atau CSV">
                 <Upload size={17} />
-                <span>Impor CSV</span>
+                <span>Impor Excel</span>
                 <input
                   type="file"
-                  accept=".csv"
+                  accept=".xlsx, .xls, .csv"
                   style={{ display: 'none' }}
-                  onChange={handleCsvImport}
+                  onChange={handleExcelImport}
                 />
               </label>
 
@@ -642,8 +653,8 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                       <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)' }}>
                         Daftar Pemilih Tetap (DPT) Kosong
                       </div>
-                      <div style={{ fontSize: '0.88rem', maxWidth: '460px', lineHeight: '1.5' }}>
-                        Seluruh data pemilih telah dikosongkan. Silakan tambah data pemilih (Siswa, Guru, Tendik), impor berkas CSV, atau generate otomatis.
+                      <div style={{ fontSize: '0.88rem', maxWidth: '480px', lineHeight: '1.5' }}>
+                        Seluruh data pemilih telah dikosongkan. Silakan tambah data pemilih (Siswa, Guru, Tendik), unduh template &amp; impor berkas Excel, atau generate otomatis.
                       </div>
                       {!isReadOnly && (
                         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -655,10 +666,19 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                             <GraduationCap size={16} />
                             <span>Tambah Guru</span>
                           </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            onClick={() => downloadDptTemplateExcel()}
+                            style={{ borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
+                          >
+                            <FileSpreadsheet size={16} />
+                            <span>Unduh Template Excel</span>
+                          </button>
                           <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
                             <Upload size={16} />
-                            <span>Impor dari CSV</span>
-                            <input type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCsvImport} />
+                            <span>Impor Berkas Excel</span>
+                            <input type="file" accept=".xlsx, .xls, .csv" style={{ display: 'none' }} onChange={handleExcelImport} />
                           </label>
                         </div>
                       )}
