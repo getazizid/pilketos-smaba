@@ -27,6 +27,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     addBulkStudents, 
     deleteStudent, 
     deleteBulkStudents, 
+    deleteAllStudents,
     resetStudentVote 
   } = useElection();
   const { userRole } = useAuth();
@@ -228,6 +229,16 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (isReadOnly || students.length === 0) return;
+
+    if (window.confirm(`PERINGATAN KOSONGKAN DPT:\n\nApakah Anda yakin ingin MENGHAPUS SEMUA ${students.length} data siswa DPT dari sistem dan database Cloud Firestore?\n\nTindakan ini akan mengosongkan seluruh daftar pemilih agar Anda dapat memasukkan data DPT baru.`)) {
+      await deleteAllStudents();
+      setSelectedIds([]);
+      if (onAddToast) onAddToast('Seluruh data DPT siswa berhasil dikosongkan dari sistem & cloud.', 'warning');
+    }
+  };
+
   return (
     <div>
       {/* Header & Main Actions */}
@@ -291,6 +302,19 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                 <PlusCircle size={16} />
                 <span>+15 Siswa Otomatis</span>
               </button>
+
+              {students.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleDeleteAll}
+                  style={{ borderColor: '#fca5a5', color: '#dc2626' }}
+                  title="Kosongkan seluruh data DPT dari sistem & database cloud"
+                >
+                  <Trash2 size={16} />
+                  <span>Kosongkan DPT</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -426,8 +450,44 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           <tbody>
             {filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan={isReadOnly ? 7 : 9} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
-                  Tidak ada data siswa DPT yang cocok dengan pencarian / filter.
+                <td colSpan={isReadOnly ? 7 : 9} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
+                  {students.length === 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        background: '#f1f5f9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-muted)'
+                      }}>
+                        <Trash2 size={26} />
+                      </div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        Daftar Pemilih Tetap (DPT) Kosong
+                      </div>
+                      <div style={{ fontSize: '0.88rem', maxWidth: '460px', lineHeight: '1.5' }}>
+                        Seluruh data pemilih telah dikosongkan. Silakan tambah data siswa secara manual, impor berkas CSV sekolah, atau generate siswa otomatis.
+                      </div>
+                      {!isReadOnly && (
+                        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <button type="button" className="btn btn-primary" onClick={openAddModal}>
+                            <UserPlus size={16} />
+                            <span>Tambah Siswa Manual</span>
+                          </button>
+                          <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
+                            <Upload size={16} />
+                            <span>Impor dari CSV</span>
+                            <input type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCsvImport} />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    'Tidak ada data siswa DPT yang cocok dengan pencarian / filter.'
+                  )}
                 </td>
               </tr>
             ) : (

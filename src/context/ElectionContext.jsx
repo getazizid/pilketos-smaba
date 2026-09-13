@@ -10,6 +10,7 @@ import {
   collection, 
   doc, 
   onSnapshot, 
+  getDocs,
   updateDoc, 
   increment, 
   setDoc, 
@@ -37,11 +38,12 @@ export function ElectionProvider({ children }) {
   const [students, setStudents] = useState(() => {
     try {
       const saved = localStorage.getItem('pilketos_students_v2');
-      if (saved) return JSON.parse(saved);
+      if (saved !== null) return JSON.parse(saved);
       localStorage.removeItem('pilketos_students');
-      return INITIAL_STUDENTS;
+      if (!isFirebaseConfigured) return INITIAL_STUDENTS;
+      return [];
     } catch {
-      return INITIAL_STUDENTS;
+      return [];
     }
   });
 
@@ -94,9 +96,7 @@ export function ElectionProvider({ children }) {
   }, [candidates]);
 
   useEffect(() => {
-    if (!isFirebaseConfigured) {
-      localStorage.setItem('pilketos_students_v2', JSON.stringify(students));
-    }
+    localStorage.setItem('pilketos_students_v2', JSON.stringify(students));
   }, [students]);
 
   useEffect(() => {
@@ -136,10 +136,9 @@ export function ElectionProvider({ children }) {
 
     // 3. Listen to Students
     const unsubStudents = onSnapshot(collection(db, 'students'), (snapshot) => {
-      if (!snapshot.empty) {
-        const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        setStudents(loaded);
-      }
+      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setStudents(loaded);
+      localStorage.setItem('pilketos_students_v2', JSON.stringify(loaded));
     }, (err) => console.warn('Firestore students listener:', err));
 
     // 4. Listen to Users (Staff/Operators)
@@ -373,6 +372,31 @@ export function ElectionProvider({ children }) {
     addLog(`${studentIds.length} siswa DPT terpilih telah dihapus massal.`, 'WARNING');
   };
 
+  const deleteAllStudents = async () => {
+    if (isFirebaseConfigured && db) {
+      try {
+        const snap = await getDocs(collection(db, 'students'));
+        const docIds = snap.docs.map(d => d.id);
+        const chunkSize = 400;
+        for (let i = 0; i < docIds.length; i += chunkSize) {
+          const chunk = docIds.slice(i, i + chunkSize);
+          const batch = writeBatch(db);
+          chunk.forEach((id) => {
+            batch.delete(doc(db, 'students', id));
+          });
+          await batch.commit();
+        }
+        console.log(`[Firestore] Seluruh ${docIds.length} siswa DPT berhasil dikosongkan dari cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal kosongkan siswa di Firestore:', err);
+      }
+    }
+
+    setStudents([]);
+    localStorage.setItem('pilketos_students_v2', JSON.stringify([]));
+    addLog('Seluruh data DPT siswa telah dikosongkan oleh Admin.', 'DANGER');
+  };
+
   const resetStudentVote = async (id) => {
     if (isFirebaseConfigured && db) {
       try {
@@ -551,6 +575,7 @@ export function ElectionProvider({ children }) {
         addBulkStudents,
         deleteStudent,
         deleteBulkStudents,
+        deleteAllStudents,
         resetStudentVote,
         updateSettings,
         resetAllVotes,
