@@ -62,16 +62,6 @@ export function VoterLogin({ onLoginSuccess }) {
     if (onLoginSuccess) onLoginSuccess(student);
   };
 
-  // Demo helper: Isi otomatis salah satu siswa yang belum memilih
-  const fillSampleStudent = (sample) => {
-    setNisn(sample.nisn);
-    setToken(sample.token);
-    setErrorMsg('');
-    setVotedInfo(null);
-  };
-
-  const sampleAvailable = students.filter(s => !s.hasVoted).slice(0, 3);
-
   return (
     <div className="container-narrow" style={{ marginTop: '1.5rem' }}>
       <div className="glass-panel glass-panel-elevated" style={{ padding: '2.5rem 2rem' }}>
@@ -192,33 +182,6 @@ export function VoterLogin({ onLoginSuccess }) {
             <ArrowRight size={18} />
           </button>
         </form>
-
-        {/* Demo Helper: Quick Filler */}
-        {sampleAvailable.length > 0 && (
-          <div style={{ 
-            marginTop: '2rem', 
-            paddingTop: '1.5rem', 
-            borderTop: '1px dashed #cbd5e1',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-              Akun Siswa Uji Coba (Belum Memilih):
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-              {sampleAvailable.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="btn btn-sm btn-outline"
-                  onClick={() => fillSampleStudent(s)}
-                  style={{ fontSize: '0.75rem' }}
-                >
-                  {s.name.split(' ')[0]} ({s.class}) &bull; {s.token}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Keamanan & Asas */}
         <div style={{

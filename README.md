@@ -8,7 +8,7 @@
 
 1. **Bilik Suara Digital Siswa (Voter Booth)**:
    - Login menggunakan kombinasi **NISN & Token Unik 6 Karakter**.
-   - Tampilan surat suara elektronik interaktif dengan foto paslon, nomor urut, serta modal popup Visi & Misi.
+   - Tampilan surat suara elektronik interaktif dengan foto paslon, nomor urut, serta alur pencoblosan langsung yang cepat dan akurat (informasi visi dan misi paslon tertera pada poster fisik TPS).
    - Konfirmasi pilihan 2-langkah anti-keliru.
    - Tanda terima digital (Struk Sah Pemilih) dengan Nomor Referensi Kriptografis Unik dan Timestamp.
 

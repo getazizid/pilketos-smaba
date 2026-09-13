@@ -53,27 +53,27 @@ export function QuickCountDisplay({ onBack }) {
           <img
             src={settings.schoolLogo || '/assets/logo.png'}
             alt="Logo SMAN 1 Batu"
-            style={{ 
-              width: '64px', 
-              height: '64px', 
+            style={{
+              width: '64px',
+              height: '64px',
               objectFit: 'contain',
-              filter: 'drop-shadow(0 3px 8px rgba(0, 0, 0, 0.12))' 
+              filter: 'drop-shadow(0 3px 8px rgba(0, 0, 0, 0.12))'
             }}
           />
           <div>
-            <div style={{ 
-              fontSize: '0.8rem', 
-              fontWeight: '800', 
-              color: '#b45309', 
-              letterSpacing: '0.08em', 
-              textTransform: 'uppercase' 
+            <div style={{
+              fontSize: '0.8rem',
+              fontWeight: '800',
+              color: '#b45309',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase'
             }}>
               PENGHITUNGAN SUARA RESMI REAL-TIME (QUICK COUNT)
             </div>
-            <h1 style={{ 
-              fontSize: '2rem', 
-              fontWeight: '900', 
-              color: '#0f172a', 
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: '900',
+              color: '#0f172a',
               letterSpacing: '-0.02em',
               lineHeight: '1.2'
             }}>
@@ -223,8 +223,8 @@ export function QuickCountDisplay({ onBack }) {
                 borderRadius: 'var(--radius-xl)',
                 background: '#ffffff',
                 border: isLeading ? '2.5px solid #f59e0b' : '1px solid #e2e8f0',
-                boxShadow: isLeading 
-                  ? '0 12px 32px rgba(217, 119, 6, 0.18), 0 2px 6px rgba(0,0,0,0.04)' 
+                boxShadow: isLeading
+                  ? '0 12px 32px rgba(217, 119, 6, 0.18), 0 2px 6px rgba(0,0,0,0.04)'
                   : '0 6px 20px rgba(15, 23, 42, 0.06)'
               }}
             >
@@ -360,7 +360,7 @@ export function QuickCountDisplay({ onBack }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Radio size={18} color="#dc2626" />
           <span>
-            <strong>PENGUMUMAN PANITIA:</strong> Pemungutan suara berlangsung hingga pukul 14.30 WIB di TPS-01 Graha Aula SMABA.
+            <strong>PENGUMUMAN PANITIA:</strong> Pemungutan suara berlangsung hingga pukul 13.00 WIB di TPS SMAN 1 Batu.
           </span>
         </div>
         <div style={{ color: '#b45309', fontWeight: '800', letterSpacing: '0.04em' }}>

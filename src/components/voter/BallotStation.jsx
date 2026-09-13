@@ -133,8 +133,6 @@ function BallotStationInner({ onAddToast }) {
         ))}
       </div>
 
-      {/* Modal Konfirmasi Coblos Langsung */}
-
       {/* Modal Konfirmasi Coblos */}
       <VoteConfirmModal
         candidate={selectedCandidateForVote}

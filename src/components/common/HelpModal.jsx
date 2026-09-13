@@ -43,7 +43,7 @@ export function HelpModal({ isOpen, onClose }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2rem' }}>
           {[
             { num: 1, title: 'Ambil Kartu Pemilih', text: 'Tunjukkan kartu pelajar ke Petugas TPS di meja registrasi untuk memperoleh Kartu Pemilih berisi Token Akses.' },
-            { num: 2, title: 'Menuju Bilik Suara', text: 'Masuki komputer bilik suara digital resmi yang telah diotorisasi Panitia di Graha Aula SMABA.' },
+            { num: 2, title: 'Menuju Bilik Suara', text: 'Masuki komputer bilik suara digital resmi yang telah diotorisasi Panitia.' },
             { num: 3, title: 'Input NISN & Token', text: 'Ketik 10 digit NISN Anda dan 6 karakter Token Rahasia yang tertera pada kartu fisik.' },
             { num: 4, title: 'Langsung Coblos Paslon', text: 'Klik foto atau tombol hijau "COBLOS PASLON" pada kandidat pilihan Anda.' },
             { num: 5, title: 'Konfirmasi & Ambil Tinta', text: 'Tekan "YA, COBLOS SEKARANG" untuk konfirmasi suara, simpan bukti digital, dan celupkan jari ke tinta pemilu.' }
