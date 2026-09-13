@@ -12,7 +12,6 @@ export const INITIAL_CANDIDATES = [
     chairmanClass: 'XI-1',
     viceChairmanClass: 'X-3',
     photoUrl: '/assets/paslon1.jpg',
-    tagline: 'Sinergis, Berkarakter, Unggul dalam IPTEK dan Kebudayaan',
     voteCount: 0
   },
   {
@@ -23,7 +22,6 @@ export const INITIAL_CANDIDATES = [
     chairmanClass: 'XI-4',
     viceChairmanClass: 'XI-7',
     photoUrl: '/assets/paslon2.jpg',
-    tagline: 'Bersama Menuju Perubahan: Nyata, Transparan, Berprestasi',
     voteCount: 0
   },
   {
@@ -34,7 +32,6 @@ export const INITIAL_CANDIDATES = [
     chairmanClass: 'XI-9',
     viceChairmanClass: 'X-5',
     photoUrl: '/assets/paslon3.jpg',
-    tagline: 'Harmoni SMABA: Berbudaya, Berjiwa Pemimpin, Menginspirasi',
     voteCount: 0
   }
 ];

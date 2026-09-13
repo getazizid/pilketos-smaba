@@ -20,8 +20,7 @@ export function CandidateManager({ onAddToast }) {
     viceChairmanName: '',
     chairmanClass: '',
     viceChairmanClass: '',
-    photoUrl: '',
-    tagline: ''
+    photoUrl: ''
   });
 
   const openAddModal = () => {
@@ -32,8 +31,7 @@ export function CandidateManager({ onAddToast }) {
       viceChairmanName: '',
       chairmanClass: 'XI-1',
       viceChairmanClass: 'X-1',
-      photoUrl: '/assets/paslon1.jpg',
-      tagline: ''
+      photoUrl: '/assets/paslon1.jpg'
     });
     setIsModalOpen(true);
   };
@@ -46,8 +44,7 @@ export function CandidateManager({ onAddToast }) {
       viceChairmanName: c.viceChairmanName,
       chairmanClass: c.chairmanClass,
       viceChairmanClass: c.viceChairmanClass,
-      photoUrl: c.photoUrl,
-      tagline: c.tagline || ''
+      photoUrl: c.photoUrl
     });
     setIsModalOpen(true);
   };
@@ -62,8 +59,7 @@ export function CandidateManager({ onAddToast }) {
       viceChairmanName: formData.viceChairmanName.trim(),
       chairmanClass: formData.chairmanClass.trim(),
       viceChairmanClass: formData.viceChairmanClass.trim(),
-      photoUrl: formData.photoUrl || '/assets/paslon1.jpg',
-      tagline: formData.tagline.trim()
+      photoUrl: formData.photoUrl || '/assets/paslon1.jpg'
     };
 
     if (editingCandidate) {
@@ -191,22 +187,6 @@ export function CandidateManager({ onAddToast }) {
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Kelas: {cand.viceChairmanClass}</div>
               </div>
 
-              {cand.tagline && (
-                <div style={{
-                  fontSize: '0.825rem',
-                  fontStyle: 'italic',
-                  color: 'var(--text-secondary)',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  marginBottom: '1rem',
-                  borderLeft: '3px solid var(--gold)'
-                }}>
-                  "{cand.tagline}"
-                </div>
-              )}
-
               {/* Actions */}
               {!isReadOnly && (
                 <div style={{ marginTop: 'auto', display: 'flex', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
@@ -243,30 +223,17 @@ export function CandidateManager({ onAddToast }) {
         maxWidth="700px"
       >
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Nomor Urut</label>
-              <input
-                type="number"
-                className="form-input"
-                value={formData.number}
-                onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                min={1}
-                max={20}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Tagline / Motto Singkat</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Contoh: Bersama Menuju SMABA Juara"
-                value={formData.tagline}
-                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-              />
-            </div>
+          <div className="form-group">
+            <label className="form-label">Nomor Urut</label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.number}
+              onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+              min={1}
+              max={20}
+              required
+            />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>

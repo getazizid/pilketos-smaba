@@ -40,14 +40,6 @@ export function CandidateCard({ candidate, onSelectCandidate }) {
           <div className="pair-name">{candidate.viceChairmanName}</div>
           <div className="pair-class">Kelas {candidate.viceChairmanClass}</div>
         </div>
-
-        {/* Tagline / Motto */}
-        {candidate.tagline && (
-          <div className="candidate-tagline">
-            "{candidate.tagline}"
-          </div>
-        )}
-
         {/* Tombol Aksi Langsung Coblos */}
         <div className="candidate-actions" style={{ marginTop: 'auto' }}>
           <button
