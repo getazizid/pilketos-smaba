@@ -59,6 +59,12 @@ export const INITIAL_SETTINGS = {
   schoolAddress: 'Jl. KH. Agus Salim No. 57, Sisir, Kec. Batu, Kota Batu, Jawa Timur 65314',
   schoolLogo: '/assets/logo.png',
   
+  // Kop Surat Instansi Resmi Jawa Timur
+  reportProvince: 'PEMERINTAH PROVINSI JAWA TIMUR',
+  reportAgency: 'DINAS PENDIDIKAN • CABANG DINAS WILAYAH MALANG',
+  reportWebsite: 'www.sman1batu.sch.id',
+  reportEmail: 'info@sman1batu.sch.id',
+  
   // Format Berita Acara Resmi
   reportTitle: 'BERITA ACARA REKAPITULASI HASIL PENGHITUNGAN SUARA',
   reportSubtitle: 'PEMILIHAN KETUA DAN WAKIL KETUA OSIS TAHUN 2026',

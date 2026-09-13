@@ -437,7 +437,7 @@ export function ElectionProvider({ children }) {
 
     setStudents([]);
     localStorage.setItem('pilketos_students_v2', JSON.stringify([]));
-    addLog('Seluruh data DPT siswa telah dikosongkan oleh Admin.', 'DANGER');
+    addLog('Seluruh data DPT pemilih (Siswa, Guru, Tendik) telah dikosongkan oleh Admin.', 'DANGER');
   };
 
   const resetStudentVote = async (id) => {

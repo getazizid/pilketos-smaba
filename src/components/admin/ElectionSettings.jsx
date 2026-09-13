@@ -329,6 +329,50 @@ export function ElectionSettings({ onAddToast }) {
             />
           </div>
 
+          <div className="form-group">
+            <label className="form-label">Pemerintah Provinsi</label>
+            <input
+              type="text"
+              className="form-input"
+              value={generalForm.reportProvince || ''}
+              onChange={(e) => setGeneralForm({ ...generalForm, reportProvince: e.target.value })}
+              placeholder="PEMERINTAH PROVINSI JAWA TIMUR"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Dinas Pendidikan / Cabang Dinas</label>
+            <input
+              type="text"
+              className="form-input"
+              value={generalForm.reportAgency || ''}
+              onChange={(e) => setGeneralForm({ ...generalForm, reportAgency: e.target.value })}
+              placeholder="DINAS PENDIDIKAN • CABANG DINAS WILAYAH MALANG"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Website Resmi Sekolah</label>
+            <input
+              type="text"
+              className="form-input"
+              value={generalForm.reportWebsite || ''}
+              onChange={(e) => setGeneralForm({ ...generalForm, reportWebsite: e.target.value })}
+              placeholder="www.sman1batu.sch.id"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Pos-el (Email) Resmi Sekolah</label>
+            <input
+              type="text"
+              className="form-input"
+              value={generalForm.reportEmail || ''}
+              onChange={(e) => setGeneralForm({ ...generalForm, reportEmail: e.target.value })}
+              placeholder="info@sman1batu.sch.id"
+            />
+          </div>
+
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label className="form-label">Alamat Lengkap Sekolah</label>
             <input
@@ -373,7 +417,7 @@ export function ElectionSettings({ onAddToast }) {
           </h3>
 
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-            Tindakan ini akan mengembalikan seluruh perolehan suara paslon menjadi 0 dan menghapus status "Sudah Memilih" dari seluruh DPT siswa. Gunakan hanya sebelum pemilihan resmi dimulai atau setelah gladi bersih.
+            Tindakan ini akan mengembalikan seluruh perolehan suara paslon menjadi 0 dan menghapus status "Sudah Memilih" dari seluruh DPT (Siswa, Guru, Tendik). Gunakan hanya sebelum pemilihan resmi dimulai atau setelah gladi bersih.
           </p>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>

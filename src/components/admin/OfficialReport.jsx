@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useElection } from '../../context/ElectionContext';
-import { Printer, ArrowLeft, Edit3, X, Check, FileText, Award, Users, FileCheck } from 'lucide-react';
+import { Printer, ArrowLeft, Edit3, X, Check, FileText, Award, Users, FileCheck, Building } from 'lucide-react';
 import { formatNumber, formatSimpleDate } from '../../utils/helpers';
 
 export function OfficialReport({ onBack, onAddToast }) {
-  const { candidates, settings, updateSettings, totalDpt, totalVotes, participationPercentage, totalUnvoted } = useElection();
+  const { candidates, students, settings, updateSettings, totalDpt, totalVotes, participationPercentage, totalUnvoted } = useElection();
+
+  // Breakdown per kategori pemilih (Siswa, Guru, Tenaga Kependidikan)
+  const totalSiswa = students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length;
+  const totalGuru = students.filter(s => s.voterType === 'GURU').length;
+  const totalTendik = students.filter(s => s.voterType === 'TENDIK').length;
+
+  const votedSiswa = students.filter(s => (s.voterType || 'SISWA') === 'SISWA' && s.hasVoted).length;
+  const votedGuru = students.filter(s => s.voterType === 'GURU' && s.hasVoted).length;
+  const votedTendik = students.filter(s => s.voterType === 'TENDIK' && s.hasVoted).length;
+
+  const unvotedSiswa = Math.max(0, totalSiswa - votedSiswa);
+  const unvotedGuru = Math.max(0, totalGuru - votedGuru);
+  const unvotedTendik = Math.max(0, totalTendik - votedTendik);
+
+  const pctSiswa = totalSiswa > 0 ? ((votedSiswa / totalSiswa) * 100).toFixed(1) : '0.0';
+  const pctGuru = totalGuru > 0 ? ((votedGuru / totalGuru) * 100).toFixed(1) : '0.0';
+  const pctTendik = totalTendik > 0 ? ((votedTendik / totalTendik) * 100).toFixed(1) : '0.0';
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [reportForm, setReportForm] = useState({
+    // Kop Surat & Identitas Lembaga
+    reportProvince: settings.reportProvince || 'PEMERINTAH PROVINSI JAWA TIMUR',
+    reportAgency: settings.reportAgency || 'DINAS PENDIDIKAN • CABANG DINAS WILAYAH MALANG',
+    schoolName: settings.schoolName || 'SMA Negeri 1 Batu',
+    schoolAddress: settings.schoolAddress || 'Jl. KH. Agus Salim No. 57, Sisir, Kec. Batu, Kota Batu, Jawa Timur 65314',
+    reportWebsite: settings.reportWebsite || 'www.sman1batu.sch.id',
+    reportEmail: settings.reportEmail || 'info@sman1batu.sch.id',
+
+    // Format Berita Acara
     reportTitle: settings.reportTitle || 'BERITA ACARA REKAPITULASI HASIL PENGHITUNGAN SUARA',
     reportSubtitle: settings.reportSubtitle || 'PEMILIHAN KETUA DAN WAKIL KETUA OSIS TAHUN 2026',
     reportDocNumber: settings.reportDocNumber || '421.3 / 118 / OSIS-SMABA / IX / 2026',
@@ -43,6 +69,13 @@ export function OfficialReport({ onBack, onAddToast }) {
   // Sinkronkan state lokal jika settings berubah dari luar
   useEffect(() => {
     setReportForm({
+      reportProvince: settings.reportProvince || 'PEMERINTAH PROVINSI JAWA TIMUR',
+      reportAgency: settings.reportAgency || 'DINAS PENDIDIKAN • CABANG DINAS WILAYAH MALANG',
+      schoolName: settings.schoolName || 'SMA Negeri 1 Batu',
+      schoolAddress: settings.schoolAddress || 'Jl. KH. Agus Salim No. 57, Sisir, Kec. Batu, Kota Batu, Jawa Timur 65314',
+      reportWebsite: settings.reportWebsite || 'www.sman1batu.sch.id',
+      reportEmail: settings.reportEmail || 'info@sman1batu.sch.id',
+
       reportTitle: settings.reportTitle || 'BERITA ACARA REKAPITULASI HASIL PENGHITUNGAN SUARA',
       reportSubtitle: settings.reportSubtitle || 'PEMILIHAN KETUA DAN WAKIL KETUA OSIS TAHUN 2026',
       reportDocNumber: settings.reportDocNumber || '421.3 / 118 / OSIS-SMABA / IX / 2026',
@@ -215,11 +248,92 @@ export function OfficialReport({ onBack, onAddToast }) {
 
             {/* Modal Form Body */}
             <form onSubmit={handleSaveModal} style={{ overflowY: 'auto', padding: '1.5rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {/* Grup 1: Judul & Nomor Berita Acara */}
+              {/* Grup 1: Kop Surat & Identitas Lembaga */}
+              <div>
+                <div style={{ fontSize: '0.92rem', fontWeight: '700', color: '#1e3a8a', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Building size={16} />
+                  <span>1. Kop Surat &amp; Identitas Lembaga</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.82rem' }}>Pemerintah Provinsi</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={reportForm.reportProvince}
+                      onChange={(e) => setReportForm({ ...reportForm, reportProvince: e.target.value })}
+                      placeholder="PEMERINTAH PROVINSI JAWA TIMUR"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.82rem' }}>Dinas / Cabang Dinas</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={reportForm.reportAgency}
+                      onChange={(e) => setReportForm({ ...reportForm, reportAgency: e.target.value })}
+                      placeholder="DINAS PENDIDIKAN • CABANG DINAS WILAYAH MALANG"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.82rem' }}>Nama Sekolah / Lembaga</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={reportForm.schoolName}
+                      onChange={(e) => setReportForm({ ...reportForm, schoolName: e.target.value })}
+                      placeholder="SMA Negeri 1 Batu"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.82rem' }}>Website Resmi</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={reportForm.reportWebsite}
+                      onChange={(e) => setReportForm({ ...reportForm, reportWebsite: e.target.value })}
+                      placeholder="www.sman1batu.sch.id"
+                      required
+                    />
+                  </div>
+
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label className="form-label" style={{ fontSize: '0.82rem' }}>Alamat Lengkap Satuan Pendidikan</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={reportForm.schoolAddress}
+                      onChange={(e) => setReportForm({ ...reportForm, schoolAddress: e.target.value })}
+                      placeholder="Jl. KH. Agus Salim No. 57, Sisir, Kec. Batu, Kota Batu, Jawa Timur 65314"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.82rem' }}>Pos-el (Email)</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={reportForm.reportEmail}
+                      onChange={(e) => setReportForm({ ...reportForm, reportEmail: e.target.value })}
+                      placeholder="info@sman1batu.sch.id"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grup 2: Judul & Nomor Berita Acara */}
               <div>
                 <div style={{ fontSize: '0.92rem', fontWeight: '700', color: '#1e3a8a', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <FileCheck size={16} />
-                  <span>1. Nomor Surat &amp; Judul Dokumen</span>
+                  <span>2. Nomor Surat &amp; Judul Dokumen</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
                   <div style={{ gridColumn: 'span 2' }}>
@@ -294,11 +408,11 @@ export function OfficialReport({ onBack, onAddToast }) {
                 </div>
               </div>
 
-              {/* Grup 2: Mengetahui & Menyetujui */}
+              {/* Grup 3: Mengetahui & Menyetujui */}
               <div>
                 <div style={{ fontSize: '0.92rem', fontWeight: '700', color: '#1e3a8a', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Award size={16} />
-                  <span>2. Pengesah (Kepala Sekolah &amp; Pembina OSIS)</span>
+                  <span>3. Pengesah (Kepala Sekolah &amp; Pembina OSIS)</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                   {/* Kepala Sekolah */}
@@ -379,11 +493,11 @@ export function OfficialReport({ onBack, onAddToast }) {
                 </div>
               </div>
 
-              {/* Grup 3: Panitia & Saksi */}
+              {/* Grup 4: Panitia & Saksi */}
               <div>
                 <div style={{ fontSize: '0.92rem', fontWeight: '700', color: '#1e3a8a', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Users size={16} />
-                  <span>3. Ketua Panitia / MPK &amp; Saksi Paslon</span>
+                  <span>4. Ketua Panitia / MPK &amp; Saksi Paslon</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
                   {/* Panitia */}
@@ -559,19 +673,19 @@ export function OfficialReport({ onBack, onAddToast }) {
           />
           <div style={{ textAlign: 'center', flex: 1 }}>
             <div style={{ fontSize: '13pt', fontWeight: 'bold', textTransform: 'uppercase' }}>
-              PEMERINTAH PROVINSI JAWA TIMUR
+              {settings.reportProvince || 'PEMERINTAH PROVINSI JAWA TIMUR'}
             </div>
             <div style={{ fontSize: '12pt', fontWeight: 'bold', textTransform: 'uppercase' }}>
-              DINAS PENDIDIKAN &bull; CABANG DINAS WILAYAH MALANG
+              {settings.reportAgency || 'DINAS PENDIDIKAN • CABANG DINAS WILAYAH MALANG'}
             </div>
-            <div style={{ fontSize: '16pt', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {settings.schoolName || 'SMA NEGERI 1 BATU'}
+            <div style={{ fontSize: '16pt', fontWeight: 'bold', letterSpacing: '0.04em' }}>
+              {settings.schoolName || 'SMA Negeri 1 Batu'}
             </div>
             <div style={{ fontSize: '9pt', fontStyle: 'italic', marginTop: '2px' }}>
               {settings.schoolAddress || 'Jl. KH. Agus Salim No. 57, Sisir, Kec. Batu, Kota Batu, Jawa Timur 65314'}
             </div>
             <div style={{ fontSize: '9pt' }}>
-              Website: www.sman1batu.sch.id &bull; Pos-el: info@sman1batu.sch.id
+              Website: {settings.reportWebsite || 'www.sman1batu.sch.id'} &bull; Pos-el: {settings.reportEmail || 'info@sman1batu.sch.id'}
             </div>
           </div>
         </div>
@@ -591,30 +705,81 @@ export function OfficialReport({ onBack, onAddToast }) {
 
         {/* NARASI PEMBUKA */}
         <div style={{ fontSize: '11pt', lineHeight: '1.6', textAlign: 'justify', marginBottom: '1.5rem' }}>
-          Pada hari ini, <strong>{settings.reportDay || 'Selasa'}</strong> tanggal <strong>{settings.reportDate || '8 September 2026'}</strong>, bertempat di <strong>{settings.tpsCode || 'TPS SMAN 1 Batu'}</strong>, telah dilaksanakan Rapat Pleno Terbuka Penghitungan dan Rekapitulasi Suara {settings.reportSubtitle || 'Pemilihan Ketua dan Wakil Ketua Organisasi Siswa Intra Sekolah (OSIS)'} {settings.schoolName || 'SMA Negeri 1 Batu'} Periode Masa Bakti {settings.period || '2026/2027'} secara langsung, umum, bebas, rahasia, jujur, dan adil (LUBER JURDIL) menggunakan sistem E-Voting Digital.
+          Pada hari ini, <strong>{settings.reportDay || 'Selasa'}</strong> tanggal <strong>{settings.reportDate || '8 September 2026'}</strong>, bertempat di <strong>{settings.tpsCode || 'TPS SMAN 1 Batu'}</strong>, telah dilaksanakan Rapat Pleno Terbuka Penghitungan dan Rekapitulasi Suara {settings.reportSubtitle || 'Pemilihan Ketua dan Wakil Ketua Organisasi Siswa Intra Sekolah (OSIS)'} {settings.schoolName || 'SMA Negeri 1 Batu'} Periode Masa Bakti {settings.period || '2026/2027'} secara langsung, umum, bebas, rahasia, jujur, dan adil (LUBER JURDIL) menggunakan sistem E-Voting Digital yang diikuti oleh seluruh warga sekolah yang terdiri dari pemilih <strong>Siswa</strong>, <strong>Guru</strong>, dan <strong>Tenaga Kependidikan (Tendik)</strong>.
         </div>
 
-        {/* TABEL 1: DATA PEMILIH & PARTISIPASI */}
-        <div style={{ marginBottom: '1.5rem' }}>
+        {/* TABEL 1: DATA PEMILIH & PARTISIPASI (SISWA, GURU, TENDIK) */}
+        <div style={{ marginBottom: '1.75rem' }}>
           <div style={{ fontSize: '11pt', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-            I. DATA PEMILIH DAN PENGGUNAAN HAK SUARA
+            I. DATA PEMILIH DAN PENGGUNAAN HAK SUARA (DPT &amp; REKAPITULASI)
           </div>
+
+          {/* Rincian Berdasarkan Kategori Pemilih: Siswa, Guru, Tenaga Kependidikan */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10pt', border: '1px solid #000', marginBottom: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#f1f5f9', borderBottom: '1.5px solid #000' }}>
+                <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', width: '5%' }}>No</th>
+                <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'left' }}>Kategori Pemilih</th>
+                <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', width: '20%' }}>Terdaftar (DPT)</th>
+                <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', width: '22%' }}>Menggunakan Hak Suara</th>
+                <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', width: '20%' }}>Tidak Memilih (Golput)</th>
+                <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', width: '13%' }}>Partisipasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center' }}>1</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Siswa / Peserta Didik</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{formatNumber(totalSiswa)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right', fontWeight: 'bold' }}>{formatNumber(votedSiswa)} Suara</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{formatNumber(unvotedSiswa)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', fontWeight: 'bold' }}>{pctSiswa}%</td>
+              </tr>
+              <tr>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center' }}>2</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Dewan Guru</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{formatNumber(totalGuru)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right', fontWeight: 'bold' }}>{formatNumber(votedGuru)} Suara</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{formatNumber(unvotedGuru)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', fontWeight: 'bold' }}>{pctGuru}%</td>
+              </tr>
+              <tr>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center' }}>3</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Tenaga Kependidikan (Tendik)</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{formatNumber(totalTendik)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right', fontWeight: 'bold' }}>{formatNumber(votedTendik)} Suara</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{formatNumber(unvotedTendik)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center', fontWeight: 'bold' }}>{pctTendik}%</td>
+              </tr>
+              <tr style={{ background: '#f8fafc', fontWeight: 'bold', borderTop: '2px solid #000' }}>
+                <td colSpan={2} style={{ border: '1px solid #000', padding: '7px 8px', textAlign: 'center', textTransform: 'uppercase' }}>
+                  Total Akumulasi Seluruh Pemilih
+                </td>
+                <td style={{ border: '1px solid #000', padding: '7px 8px', textAlign: 'right' }}>{formatNumber(totalDpt)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '7px 8px', textAlign: 'right', color: '#166534' }}>{formatNumber(totalVotes)} Suara</td>
+                <td style={{ border: '1px solid #000', padding: '7px 8px', textAlign: 'right', color: '#991b1b' }}>{formatNumber(totalUnvoted)} Orang</td>
+                <td style={{ border: '1px solid #000', padding: '7px 8px', textAlign: 'center', color: '#1e3a8a' }}>{participationPercentage}%</td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Ringkasan Akumulasi Formal Dokumen Berita Acara */}
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10.5pt' }}>
             <tbody>
               <tr style={{ borderBottom: '1px solid #000' }}>
-                <td style={{ padding: '6px', width: '60%' }}>1. Jumlah Siswa Terdaftar dalam Daftar Pemilih Tetap (DPT)</td>
+                <td style={{ padding: '6px', width: '65%' }}>1. Jumlah Total Pemilih Terdaftar dalam DPT (Siswa, Guru, Tendik)</td>
                 <td style={{ padding: '6px', fontWeight: 'bold', textAlign: 'right' }}>{formatNumber(totalDpt)} Orang</td>
               </tr>
               <tr style={{ borderBottom: '1px solid #000' }}>
-                <td style={{ padding: '6px' }}>2. Jumlah Pemilih yang Menggunakan Hak Suara (Suara Sah)</td>
+                <td style={{ padding: '6px' }}>2. Jumlah Total Pemilih yang Menggunakan Hak Suara (Suara Sah)</td>
                 <td style={{ padding: '6px', fontWeight: 'bold', textAlign: 'right' }}>{formatNumber(totalVotes)} Suara</td>
               </tr>
               <tr style={{ borderBottom: '1px solid #000' }}>
-                <td style={{ padding: '6px' }}>3. Jumlah Pemilih yang Tidak Menggunakan Hak Suara (Golput)</td>
+                <td style={{ padding: '6px' }}>3. Jumlah Total Pemilih yang Tidak Menggunakan Hak Suara (Golput)</td>
                 <td style={{ padding: '6px', fontWeight: 'bold', textAlign: 'right' }}>{formatNumber(totalUnvoted)} Orang</td>
               </tr>
               <tr style={{ borderBottom: '2px solid #000', background: '#f8fafc' }}>
-                <td style={{ padding: '6px', fontWeight: 'bold' }}>4. Persentase Partisipasi Pemilih</td>
+                <td style={{ padding: '6px', fontWeight: 'bold' }}>4. Persentase Partisipasi Pemilih Keseluruhan</td>
                 <td style={{ padding: '6px', fontWeight: 'bold', textAlign: 'right', color: '#1e3a8a' }}>{participationPercentage}%</td>
               </tr>
             </tbody>

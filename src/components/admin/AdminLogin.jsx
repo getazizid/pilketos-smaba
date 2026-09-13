@@ -65,7 +65,7 @@ export function AdminLogin({ onLoginSuccess }) {
             Portal Staf &amp; Panitia TPS
           </h2>
           <p style={{ fontSize: '0.92rem' }}>
-            Masuk untuk mengelola DPT Siswa, Paslon OSIS, Hak Akses, dan Rekapitulasi Suara
+            Masuk untuk mengelola DPT Pemilih (Siswa, Guru, Tendik), Paslon OSIS, Hak Akses, dan Rekapitulasi Suara
           </p>
         </div>
 
