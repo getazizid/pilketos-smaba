@@ -4,7 +4,7 @@ import { Maximize, Minimize, ArrowLeft, Trophy, Users, Vote, Percent, Clock, Rad
 import { formatNumber } from '../../utils/helpers';
 
 export function QuickCountDisplay({ onBack }) {
-  const { candidates, totalDpt, totalVotes, participationPercentage, totalUnvoted, settings, dptBreakdown } = useElection();
+  const { candidates, totalDpt, totalVotes, participationPercentage, totalUnvoted, settings, dptBreakdown, votedBreakdown, unvotedBreakdown } = useElection();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleFullscreen = () => {
@@ -118,6 +118,7 @@ export function QuickCountDisplay({ onBack }) {
         gap: 'clamp(0.75rem, 2vw, 1.5rem)',
         marginBottom: 'clamp(1.25rem, 2.5vw, 2.5rem)'
       }}>
+        {/* Card 1: Total DPT Terdaftar */}
         <div style={{
           background: '#ffffff',
           padding: '1.25rem 1.5rem',
@@ -165,63 +166,141 @@ export function QuickCountDisplay({ onBack }) {
           </div>
         </div>
 
+        {/* Card 2: Suara Sah Masuk */}
         <div style={{
           background: '#ffffff',
-          padding: '1.5rem',
+          padding: '1.25rem 1.5rem',
           textAlign: 'center',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid #e2e8f0',
           borderTop: '5px solid #059669',
-          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)'
+          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
         }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
-            Suara Sah Masuk
+          <div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
+              Suara Sah Masuk
+            </div>
+            <div style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: '900', color: '#059669', marginTop: '0.2rem', lineHeight: '1.1' }}>
+              {formatNumber(totalVotes)}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#047857', fontWeight: '600', marginTop: '0.25rem' }}>
+              Tercatat di Kotak Suara
+            </div>
           </div>
-          <div style={{ fontSize: '2.6rem', fontWeight: '900', color: '#059669', marginTop: '0.2rem', lineHeight: '1.1' }}>
-            {formatNumber(totalVotes)}
-          </div>
-          <div style={{ fontSize: '0.8rem', color: '#047857', fontWeight: '600', marginTop: '0.3rem' }}>
-            Tercatat di Kotak Suara
+
+          {/* Rincian Suara Sah Masuk: Siswa, Guru, dan Tendik */}
+          <div style={{
+            marginTop: '0.75rem',
+            paddingTop: '0.65rem',
+            borderTop: '1px dashed #e2e8f0',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.4rem',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #dbeafe' }}>
+              Siswa: {formatNumber(votedBreakdown?.siswa ?? 0)}
+            </span>
+            <span style={{ background: '#f0fdf4', color: '#15803d', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #dcfce7' }}>
+              Guru: {formatNumber(votedBreakdown?.guru ?? 0)}
+            </span>
+            <span style={{ background: '#fefce8', color: '#a16207', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #fef08a' }}>
+              Tendik: {formatNumber(votedBreakdown?.tendik ?? 0)}
+            </span>
           </div>
         </div>
 
+        {/* Card 3: Tingkat Partisipasi */}
         <div style={{
           background: '#ffffff',
-          padding: '1.5rem',
+          padding: '1.25rem 1.5rem',
           textAlign: 'center',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid #e2e8f0',
           borderTop: '5px solid #d97706',
-          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)'
+          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
         }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
-            Tingkat Partisipasi
+          <div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
+              Tingkat Partisipasi
+            </div>
+            <div style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: '900', color: '#d97706', marginTop: '0.2rem', lineHeight: '1.1' }}>
+              {participationPercentage}%
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#b45309', fontWeight: '600', marginTop: '0.25rem' }}>
+              Persentase Pemilih Hadir
+            </div>
           </div>
-          <div style={{ fontSize: '2.6rem', fontWeight: '900', color: '#d97706', marginTop: '0.2rem', lineHeight: '1.1' }}>
-            {participationPercentage}%
-          </div>
-          <div style={{ fontSize: '0.8rem', color: '#b45309', fontWeight: '600', marginTop: '0.3rem' }}>
-            Persentase Pemilih Hadir
+
+          {/* Rincian Rasio Partisipasi */}
+          <div style={{
+            marginTop: '0.75rem',
+            paddingTop: '0.65rem',
+            borderTop: '1px dashed #e2e8f0',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.4rem',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ background: '#fffbeb', color: '#b45309', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #fde68a' }}>
+              Masuk: {formatNumber(totalVotes)} / {formatNumber(totalDpt)} Suara
+            </span>
           </div>
         </div>
 
+        {/* Card 4: Belum Menggunakan Hak */}
         <div style={{
           background: '#ffffff',
-          padding: '1.5rem',
+          padding: '1.25rem 1.5rem',
           textAlign: 'center',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid #e2e8f0',
           borderTop: '5px solid #dc2626',
-          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)'
+          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
         }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
-            Belum Menggunakan Hak
+          <div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
+              Belum Menggunakan Hak
+            </div>
+            <div style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: '900', color: '#dc2626', marginTop: '0.2rem', lineHeight: '1.1' }}>
+              {formatNumber(totalUnvoted)}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#b91c1c', fontWeight: '600', marginTop: '0.25rem' }}>
+              Pemilih Menunggu Giliran
+            </div>
           </div>
-          <div style={{ fontSize: '2.6rem', fontWeight: '900', color: '#dc2626', marginTop: '0.2rem', lineHeight: '1.1' }}>
-            {formatNumber(totalUnvoted)}
-          </div>
-          <div style={{ fontSize: '0.8rem', color: '#b91c1c', fontWeight: '600', marginTop: '0.3rem' }}>
-            Siswa Menunggu Giliran
+
+          {/* Rincian Belum Menggunakan Hak: Siswa, Guru, dan Tendik */}
+          <div style={{
+            marginTop: '0.75rem',
+            paddingTop: '0.65rem',
+            borderTop: '1px dashed #e2e8f0',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.4rem',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #dbeafe' }}>
+              Siswa: {formatNumber(unvotedBreakdown?.siswa ?? 0)}
+            </span>
+            <span style={{ background: '#f0fdf4', color: '#15803d', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #dcfce7' }}>
+              Guru: {formatNumber(unvotedBreakdown?.guru ?? 0)}
+            </span>
+            <span style={{ background: '#fefce8', color: '#a16207', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: '700', border: '1px solid #fef08a' }}>
+              Tendik: {formatNumber(unvotedBreakdown?.tendik ?? 0)}
+            </span>
           </div>
         </div>
       </div>

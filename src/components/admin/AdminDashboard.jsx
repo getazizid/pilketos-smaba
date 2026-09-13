@@ -27,7 +27,9 @@ export function AdminDashboard({ onNavigate }) {
     totalUnvoted, 
     auditLogs,
     settings,
-    dptBreakdown
+    dptBreakdown,
+    votedBreakdown,
+    unvotedBreakdown
   } = useElection();
   const { adminUser } = useAuth();
 
@@ -168,6 +170,11 @@ export function AdminDashboard({ onNavigate }) {
           <div>
             <div className="stat-val">{formatNumber(totalVotes)}</div>
             <div className="stat-title">Total Suara Masuk</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              <span>Siswa: {votedBreakdown?.siswa ?? 0}</span> • 
+              <span>Guru: {votedBreakdown?.guru ?? 0}</span> • 
+              <span>Tendik: {votedBreakdown?.tendik ?? 0}</span>
+            </div>
           </div>
         </div>
 
@@ -188,6 +195,11 @@ export function AdminDashboard({ onNavigate }) {
           <div>
             <div className="stat-val">{formatNumber(totalUnvoted)}</div>
             <div className="stat-title">Belum Menggunakan Hak</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              <span>Siswa: {unvotedBreakdown?.siswa ?? 0}</span> • 
+              <span>Guru: {unvotedBreakdown?.guru ?? 0}</span> • 
+              <span>Tendik: {unvotedBreakdown?.tendik ?? 0}</span>
+            </div>
           </div>
         </div>
       </div>

@@ -617,6 +617,20 @@ export function ElectionProvider({ children }) {
     tendik: totalTendik
   };
 
+  // Breakdown pemilih yang sudah menggunakan hak suara
+  const votedBreakdown = {
+    siswa: students.filter(s => s.hasVoted && (s.voterType || 'SISWA') === 'SISWA').length,
+    guru: students.filter(s => s.hasVoted && s.voterType === 'GURU').length,
+    tendik: students.filter(s => s.hasVoted && s.voterType === 'TENDIK').length
+  };
+
+  // Breakdown pemilih yang belum menggunakan hak suara
+  const unvotedBreakdown = {
+    siswa: students.filter(s => !s.hasVoted && (s.voterType || 'SISWA') === 'SISWA').length,
+    guru: students.filter(s => !s.hasVoted && s.voterType === 'GURU').length,
+    tendik: students.filter(s => !s.hasVoted && s.voterType === 'TENDIK').length
+  };
+
   return (
     <ElectionContext.Provider
       value={{
@@ -635,6 +649,8 @@ export function ElectionProvider({ children }) {
         totalGuru,
         totalTendik,
         dptBreakdown,
+        votedBreakdown,
+        unvotedBreakdown,
         submitVote,
         addCandidate,
         updateCandidate,
