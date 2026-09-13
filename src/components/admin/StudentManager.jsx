@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -23,6 +23,7 @@ import { generateVoterToken } from '../../utils/tokenGenerator';
 import { downloadDptTemplateExcel, exportDptToExcel, parseDptExcelFile } from '../../utils/excelService';
 import { sortClassNames, getStandardSchoolClasses } from '../../utils/helpers';
 import { Modal } from '../common/Modal';
+import { Pagination } from '../common/Pagination';
 
 export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const { 
@@ -49,6 +50,10 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const [filterClass, setFilterClass] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'VOTED', 'NOT_VOTED'
   const [selectedIds, setSelectedIds] = useState([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // Modal Add / Edit Single Voter
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -134,6 +139,22 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
       return matchSearch && matchCategory && matchClass && matchStatus;
     });
   }, [students, searchTerm, filterCategory, filterClass, filterStatus]);
+
+  // Otomatis reset ke halaman 1 saat pencarian, filter, atau ukuran halaman berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCategory, filterClass, filterStatus, pageSize]);
+
+  // Pagination calculation
+  const totalItems = filteredStudents.length;
+  const totalPages = pageSize === 'ALL' ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedStudents = useMemo(() => {
+    if (pageSize === 'ALL') return filteredStudents;
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return filteredStudents.slice(startIndex, startIndex + pageSize);
+  }, [filteredStudents, safeCurrentPage, pageSize]);
 
   const openAddModal = (defaultType = 'SISWA') => {
     setEditingStudent(null);
@@ -276,17 +297,24 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     }
   };
 
-  // Helper Seleksi & Hapus Terpilih Centang
-  const isAllSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedIds.includes(s.id));
+  // Helper Seleksi & Hapus Terpilih Centang (Mendukung Per Halaman & Lintas Halaman)
+  const isCurrentPageAllSelected = paginatedStudents.length > 0 && paginatedStudents.every(s => selectedIds.includes(s.id));
+  const isSomeCurrentPageSelected = paginatedStudents.some(s => selectedIds.includes(s.id));
+  const isAllFilteredSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedIds.includes(s.id));
 
-  const handleToggleSelectAll = () => {
-    if (isAllSelected) {
-      const filteredIdSet = new Set(filteredStudents.map(s => s.id));
-      setSelectedIds(prev => prev.filter(id => !filteredIdSet.has(id)));
+  const handleToggleSelectCurrentPage = () => {
+    if (isCurrentPageAllSelected) {
+      const pageIdSet = new Set(paginatedStudents.map(s => s.id));
+      setSelectedIds(prev => prev.filter(id => !pageIdSet.has(id)));
     } else {
-      const newIds = new Set([...selectedIds, ...filteredStudents.map(s => s.id)]);
+      const newIds = new Set([...selectedIds, ...paginatedStudents.map(s => s.id)]);
       setSelectedIds(Array.from(newIds));
     }
+  };
+
+  const handleSelectAllFiltered = () => {
+    const allFilteredIds = filteredStudents.map(s => s.id);
+    setSelectedIds(Array.from(new Set([...selectedIds, ...allFilteredIds])));
   };
 
   const handleToggleSelectOne = (id) => {
@@ -645,8 +673,46 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           </div>
         </div>
 
-        <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
-          Menampilkan <strong style={{ color: 'var(--text-primary)' }}>{filteredStudents.length}</strong> dari {students.length} data DPT
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+          fontSize: '0.82rem',
+          color: 'var(--text-muted)',
+          marginTop: '0.75rem'
+        }}>
+          <span>
+            {pageSize !== 'ALL' && totalPages > 1 ? (
+              <>Halaman <strong style={{ color: 'var(--text-primary)' }}>{safeCurrentPage}</strong> dari <strong style={{ color: 'var(--text-primary)' }}>{totalPages}</strong> &bull; </>
+            ) : null}
+            {pageSize !== 'ALL' && filteredStudents.length > 0 ? (
+              <>Menampilkan <strong>{Math.min((safeCurrentPage - 1) * pageSize + 1, filteredStudents.length)} - {Math.min(safeCurrentPage * pageSize, filteredStudents.length)}</strong> dari </>
+            ) : 'Total '}
+            <strong style={{ color: 'var(--text-primary)' }}>{filteredStudents.length}</strong> data DPT {students.length !== filteredStudents.length && `(difilter dari ${students.length})`}
+          </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span>Per hal:</span>
+            <select
+              className="pagination-select"
+              style={{ height: '28px', fontSize: '0.78rem' }}
+              value={pageSize}
+              onChange={(e) => {
+                const val = e.target.value === 'ALL' ? 'ALL' : Number(e.target.value);
+                setPageSize(val);
+                setCurrentPage(1);
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={250}>250</option>
+              <option value="ALL">Semua</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -665,10 +731,23 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
           gap: '0.75rem',
           boxShadow: '0 2px 10px rgba(239, 68, 68, 0.08)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: '700', color: '#b91c1c', fontSize: '0.95rem' }}>
               ✓ {selectedIds.length} Pemilih Terpilih (Centang)
             </span>
+
+            {/* Tombol Pilih Semua Lintas Halaman jika belum semua terseleksi */}
+            {!isAllFilteredSelected && filteredStudents.length > paginatedStudents.length && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                onClick={handleSelectAllFiltered}
+                style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem', borderColor: '#b91c1c', color: '#b91c1c', background: '#ffffff', fontWeight: '600' }}
+              >
+                Pilih Semua {filteredStudents.length} Hasil Filter
+              </button>
+            )}
+
             <button
               type="button"
               className="btn btn-sm btn-outline"
@@ -707,10 +786,15 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                 <th style={{ width: '42px', textAlign: 'center' }}>
                   <input
                     type="checkbox"
-                    checked={isAllSelected}
-                    onChange={handleToggleSelectAll}
+                    checked={isCurrentPageAllSelected}
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate = !isCurrentPageAllSelected && isSomeCurrentPageSelected;
+                      }
+                    }}
+                    onChange={handleToggleSelectCurrentPage}
                     style={{ width: '17px', height: '17px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-                    title="Pilih / Batalkan Semua di Halaman Ini"
+                    title={isCurrentPageAllSelected ? "Batalkan pilihan semua di halaman ini" : "Pilih semua di halaman ini"}
                   />
                 </th>
               )}
@@ -782,101 +866,121 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                 </td>
               </tr>
             ) : (
-              filteredStudents.map((s, idx) => (
-                <tr key={s.id} style={{ background: selectedIds.includes(s.id) ? 'rgba(59, 130, 246, 0.05)' : undefined }}>
-                  {isSuperAdmin && (
-                    <td style={{ textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(s.id)}
-                        onChange={() => handleToggleSelectOne(s.id)}
-                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-                      />
-                    </td>
-                  )}
-                  <td>{idx + 1}</td>
-                  <td>
-                    <code style={{ color: 'var(--primary-light)', fontWeight: '600' }}>{s.nisn}</code>
-                  </td>
-                  <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{s.name}</td>
-                  <td>
-                    {renderCategoryBadge(s.voterType)}
-                  </td>
-                  <td>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{s.class}</span>
-                  </td>
-                  <td>
-                    <span style={{
-                      fontFamily: 'monospace',
-                      fontWeight: '800',
-                      letterSpacing: '0.1em',
-                      color: 'var(--gold)',
-                      background: 'var(--gold-subtle)',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: 'var(--radius-sm)'
-                    }}>
-                      {s.token}
-                    </span>
-                  </td>
-                  <td>
-                    {s.hasVoted ? (
-                      <span className="badge badge-green">
-                        <CheckCircle2 size={13} />
-                        <span>SUDAH MEMILIH</span>
-                      </span>
-                    ) : (
-                      <span className="badge badge-gold">
-                        <XCircle size={13} />
-                        <span>BELUM MEMILIH</span>
-                      </span>
+              paginatedStudents.map((s, idx) => {
+                const itemNumber = pageSize === 'ALL' ? idx + 1 : (safeCurrentPage - 1) * pageSize + idx + 1;
+                return (
+                  <tr key={s.id} style={{ background: selectedIds.includes(s.id) ? 'rgba(59, 130, 246, 0.05)' : undefined }}>
+                    {isSuperAdmin && (
+                      <td style={{ textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(s.id)}
+                          onChange={() => handleToggleSelectOne(s.id)}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                        />
+                      </td>
                     )}
-                  </td>
-                  <td style={{ fontSize: '0.8rem' }}>
-                    {s.votedAt ? new Date(s.votedAt).toLocaleTimeString('id-ID') + ' WIB' : '-'}
-                  </td>
-                  {!isReadOnly && (
+                    <td style={{ fontWeight: '600', color: 'var(--text-muted)' }}>{itemNumber}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                        {s.hasVoted && (
+                      <code style={{ color: 'var(--primary-light)', fontWeight: '600' }}>{s.nisn}</code>
+                    </td>
+                    <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{s.name}</td>
+                    <td>
+                      {renderCategoryBadge(s.voterType)}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{s.class}</span>
+                    </td>
+                    <td>
+                      <span style={{
+                        fontFamily: 'monospace',
+                        fontWeight: '800',
+                        letterSpacing: '0.1em',
+                        color: 'var(--gold)',
+                        background: 'var(--gold-subtle)',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)'
+                      }}>
+                        {s.token}
+                      </span>
+                    </td>
+                    <td>
+                      {s.hasVoted ? (
+                        <span className="badge badge-green">
+                          <CheckCircle2 size={13} />
+                          <span>SUDAH MEMILIH</span>
+                        </span>
+                      ) : (
+                        <span className="badge badge-gold">
+                          <XCircle size={13} />
+                          <span>BELUM MEMILIH</span>
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ fontSize: '0.8rem' }}>
+                      {s.votedAt ? new Date(s.votedAt).toLocaleTimeString('id-ID') + ' WIB' : '-'}
+                    </td>
+                    {!isReadOnly && (
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                          {s.hasVoted && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline"
+                              onClick={() => handleResetVote(s)}
+                              title="Reset Hak Pilih (Bisa Memilih Ulang)"
+                              style={{ padding: '0.35rem 0.6rem' }}
+                            >
+                              <RotateCcw size={14} color="var(--gold)" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="btn btn-sm btn-outline"
-                            onClick={() => handleResetVote(s)}
-                            title="Reset Hak Pilih (Bisa Memilih Ulang)"
+                            onClick={() => openEditModal(s)}
+                            title="Edit Data Pemilih"
                             style={{ padding: '0.35rem 0.6rem' }}
                           >
-                            <RotateCcw size={14} color="var(--gold)" />
+                            <Edit2 size={14} />
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline"
-                          onClick={() => openEditModal(s)}
-                          title="Edit Data Pemilih"
-                          style={{ padding: '0.35rem 0.6rem' }}
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        {isSuperAdmin && (
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleDelete(s)}
-                            title="Hapus dari DPT"
-                            style={{ padding: '0.35rem 0.6rem' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
+                          {isSuperAdmin && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger"
+                              onClick={() => handleDelete(s)}
+                              title="Hapus dari DPT"
+                              style={{ padding: '0.35rem 0.6rem' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Kontrol Navigasi Halaman (Pagination) */}
+      {filteredStudents.length > 0 && (
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredStudents.length}
+          onPageChange={(page) => setCurrentPage(page)}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+          pageSizeOptions={[10, 25, 50, 100, 250]}
+          itemLabel="data DPT"
+        />
+      )}
 
       {/* Modal Add / Edit Single Voter */}
       <Modal
