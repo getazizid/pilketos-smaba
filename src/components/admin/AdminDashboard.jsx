@@ -302,37 +302,63 @@ export function AdminDashboard({ onNavigate }) {
 
           {/* Activity Log / Audit Trail */}
           <div className="glass-panel" style={{ padding: '1.75rem', flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
-              <ShieldAlert size={20} color="var(--gold)" />
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>Log Aktivitas TPS</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <ShieldAlert size={20} color="var(--gold)" />
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>Log Aktivitas TPS</h3>
+              </div>
+              <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>
+                {auditLogs.length} Aktivitas
+              </span>
             </div>
 
-            <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {auditLogs.slice(0, 10).map((log) => (
-                <div
-                  key={log.id}
-                  style={{
-                    fontSize: '0.8rem',
-                    padding: '0.6rem 0.85rem',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 'var(--radius-sm)',
-                    borderLeft: `3px solid ${
-                      log.type === 'SUCCESS' ? 'var(--emerald)' :
-                      log.type === 'WARNING' || log.type === 'DANGER' ? 'var(--crimson)' : 'var(--primary)'
-                    }`,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '1rem'
-                  }}
-                >
-                  <span style={{ color: 'var(--text-secondary)' }}>{log.message}</span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
-                    {formatIndonesianDate(log.timestamp).split(' ')[3] || ''} WIB
-                  </span>
+            <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {auditLogs.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  Belum ada aktivitas tercatat di TPS.
                 </div>
-              ))}
+              ) : (
+                auditLogs.slice(0, 15).map((log) => (
+                  <div
+                    key={log.id}
+                    style={{
+                      fontSize: '0.8rem',
+                      padding: '0.65rem 0.85rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 'var(--radius-sm)',
+                      borderLeft: `3.5px solid ${
+                        log.type === 'SUCCESS' ? 'var(--emerald)' :
+                        log.type === 'WARNING' || log.type === 'DANGER' ? 'var(--crimson)' : 'var(--primary)'
+                      }`,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: '500', flex: '1 1 200px' }}>
+                      {log.message}
+                    </span>
+                    <span style={{ 
+                      color: 'var(--text-muted)', 
+                      fontSize: '0.72rem', 
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      background: '#f1f5f9',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '4px',
+                      border: '1px solid #e2e8f0'
+                    }}>
+                      <Clock size={12} color="#64748b" />
+                      {formatIndonesianDate(log.timestamp)}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

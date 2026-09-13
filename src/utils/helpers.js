@@ -4,29 +4,57 @@
 
 export function formatIndonesianDate(dateStringOrTimestamp) {
   if (!dateStringOrTimestamp) return '-';
-  const date = typeof dateStringOrTimestamp === 'object' && dateStringOrTimestamp.toDate 
-    ? dateStringOrTimestamp.toDate() 
-    : new Date(dateStringOrTimestamp);
-  
-  return new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZone: 'Asia/Jakarta'
-  }).format(date) + ' WIB';
+  try {
+    let date;
+    if (typeof dateStringOrTimestamp === 'object' && dateStringOrTimestamp !== null) {
+      if (typeof dateStringOrTimestamp.toDate === 'function') {
+        date = dateStringOrTimestamp.toDate();
+      } else if (dateStringOrTimestamp.seconds) {
+        date = new Date(dateStringOrTimestamp.seconds * 1000);
+      } else {
+        date = new Date(dateStringOrTimestamp);
+      }
+    } else {
+      date = new Date(dateStringOrTimestamp);
+    }
+
+    if (isNaN(date.getTime())) return '-';
+
+    const datePart = new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta'
+    }).format(date);
+
+    const timePart = new Intl.DateTimeFormat('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Jakarta'
+    }).format(date);
+
+    return `${datePart} pukul ${timePart.replace(/:/g, '.')} WIB`;
+  } catch {
+    return '-';
+  }
 }
 
 export function formatSimpleDate(dateString) {
   if (!dateString) return '-';
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(date);
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    return new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta'
+    }).format(date);
+  } catch {
+    return '-';
+  }
 }
 
 export function formatNumber(num) {
