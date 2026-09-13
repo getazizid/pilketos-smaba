@@ -75,19 +75,5 @@ export const INITIAL_USERS = [
     name: 'Super Admin Pilketos',
     role: 'ADMIN',
     tps: 'Pusat'
-  },
-  {
-    id: 'user-operator1',
-    username: 'operator1',
-    name: 'Panitia TPS (SMAN 1 Batu)',
-    role: 'OPERATOR',
-    tps: 'TPS SMAN 1 Batu'
-  },
-  {
-    id: 'user-saksi',
-    username: 'saksi',
-    name: 'Saksi Independen MPK',
-    role: 'SAKSI',
-    tps: 'Semua TPS'
   }
 ];

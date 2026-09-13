@@ -24,18 +24,12 @@ export function AdminLogin({ onLoginSuccess }) {
     if (!matchedUser) {
       if (cleanUser === 'admin') {
         matchedUser = { id: 'user-admin', username: 'admin', name: 'Super Admin', role: 'ADMIN' };
-      } else if (cleanUser === 'operator1') {
-        matchedUser = { id: 'user-op1', username: 'operator1', name: 'Panitia TPS 01', role: 'OPERATOR' };
-      } else if (cleanUser === 'saksi') {
-        matchedUser = { id: 'user-saksi', username: 'saksi', name: 'Saksi MPK', role: 'SAKSI' };
       }
     }
 
     // Password validation
     const validPasswords = {
-      admin: 'osis2026',
-      operator1: 'tps1batu',
-      saksi: 'saksi2026'
+      admin: 'osis2026'
     };
 
     const expectedPass = matchedUser?.password || validPasswords[cleanUser] || '123456';

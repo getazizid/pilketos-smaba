@@ -64,8 +64,13 @@ export function ElectionProvider({ children }) {
   // 4. Admin / Operator Users State
   const [users, setUsers] = useState(() => {
     try {
-      const saved = localStorage.getItem('pilketos_users');
-      return saved ? JSON.parse(saved) : INITIAL_USERS;
+      localStorage.removeItem('pilketos_users');
+      const saved = localStorage.getItem('pilketos_users_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return INITIAL_USERS;
     } catch {
       return INITIAL_USERS;
     }
@@ -106,9 +111,7 @@ export function ElectionProvider({ children }) {
   }, [settings]);
 
   useEffect(() => {
-    if (!isFirebaseConfigured) {
-      localStorage.setItem('pilketos_users', JSON.stringify(users));
-    }
+    localStorage.setItem('pilketos_users_v3', JSON.stringify(users));
   }, [users]);
 
   useEffect(() => {
@@ -146,6 +149,11 @@ export function ElectionProvider({ children }) {
       if (!snapshot.empty) {
         const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         setUsers(loaded);
+        localStorage.setItem('pilketos_users_v3', JSON.stringify(loaded));
+      } else if (snapshot.empty && isFirebaseConfigured && db) {
+        // Jika di Firestore masih kosong, unggah admin utama
+        const defaultAdmin = INITIAL_USERS[0];
+        setDoc(doc(db, 'users', defaultAdmin.id), defaultAdmin, { merge: true });
       }
     }, (err) => console.warn('Firestore users listener:', err));
 
@@ -544,8 +552,12 @@ export function ElectionProvider({ children }) {
         console.error('[Firestore] Gagal hapus user di Firestore:', err);
       }
     }
-    setUsers(prev => prev.filter(u => u.id !== id));
-    addLog(`Akun staf dihapus.`, 'WARNING');
+    setUsers(prev => {
+      const updated = prev.filter(u => u.id !== id && u.username !== id);
+      localStorage.setItem('pilketos_users_v3', JSON.stringify(updated));
+      return updated;
+    });
+    addLog(`Akun staf dihapus permanen.`, 'WARNING');
   };
 
   // Statistik Real-time
