@@ -263,29 +263,6 @@ export function TpsActivationGate({ children }) {
               <span>Aktivasi Bilik Suara Sekarang</span>
             </button>
           </form>
-
-          {/* Bantuan Petugas TPS */}
-          <div style={{
-            marginTop: '2.5rem',
-            paddingTop: '1.25rem',
-            borderTop: '1px dashed #cbd5e1',
-            fontSize: '0.8rem',
-            color: 'var(--text-muted)'
-          }}>
-            <div>
-              <em>Petunjuk Panitia: Kode Keamanan default sistem adalah: </em>
-              <strong 
-                style={{ color: '#b45309', cursor: 'pointer', textDecoration: 'underline' }}
-                onClick={() => setInputCode(settings.tpsSecurityCode || 'SMABA-TPS-2026')}
-                title="Klik untuk mengisi otomatis"
-              >
-                {settings.tpsSecurityCode || 'SMABA-TPS-2026'}
-              </strong>
-            </div>
-            <div style={{ marginTop: '0.3rem' }}>
-              (Dapat diubah kapan saja oleh Super Admin di Panel Pengaturan &amp; Server)
-            </div>
-          </div>
         </div>
       </div>
     );
