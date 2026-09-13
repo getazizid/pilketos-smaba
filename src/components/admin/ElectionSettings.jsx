@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
-import { isFirebaseConfigured, activeConfig, saveFirebaseCustomConfig } from '../../config/firebase';
-import { Settings, ShieldAlert, Check, Database, Clock, Building, AlertTriangle, Lock, KeyRound, Smartphone, ShieldCheck, Upload } from 'lucide-react';
+import { ShieldAlert, Check, Clock, Building, AlertTriangle, Lock, KeyRound, Smartphone, ShieldCheck } from 'lucide-react';
 
 export function ElectionSettings({ onAddToast }) {
-  const { settings, updateSettings, resetAllVotes, seedInitialDataToFirestore } = useElection();
+  const { settings, updateSettings, resetAllVotes } = useElection();
   const { userRole } = useAuth();
 
   const isSuperAdmin = userRole === 'ADMIN';
@@ -18,16 +17,6 @@ export function ElectionSettings({ onAddToast }) {
     requireTpsCode: settings.requireTpsCode ?? true,
     tpsSecurityCode: settings.tpsSecurityCode || 'SMABA-TPS-2026',
     blockMobile: settings.blockMobile ?? true
-  });
-
-  // Firebase Configuration Form
-  const [firebaseForm, setFirebaseForm] = useState({
-    apiKey: activeConfig.apiKey || '',
-    authDomain: activeConfig.authDomain || '',
-    projectId: activeConfig.projectId || '',
-    storageBucket: activeConfig.storageBucket || '',
-    messagingSenderId: activeConfig.messagingSenderId || '',
-    appId: activeConfig.appId || ''
   });
 
   const [resetConfirmText, setResetConfirmText] = useState('');
@@ -48,35 +37,6 @@ export function ElectionSettings({ onAddToast }) {
       blockMobile: securityForm.blockMobile
     });
     if (onAddToast) onAddToast('Pengaturan keamanan TPS & pembatasan perangkat berhasil disimpan.', 'success');
-  };
-
-  const handleSaveFirebase = (e) => {
-    e.preventDefault();
-    if (!isSuperAdmin) return;
-    saveFirebaseCustomConfig(firebaseForm);
-    if (onAddToast) onAddToast('Konfigurasi Firebase diperbarui. Memuat ulang aplikasi...', 'info');
-  };
-
-  const [isSeeding, setIsSeeding] = useState(false);
-
-  const handleSeedFirestore = async () => {
-    if (!window.confirm('Unggah seluruh data bawaan (Paslon, Pengaturan Sekolah, dan DPT saat ini) ke Cloud Firestore?')) {
-      return;
-    }
-    setIsSeeding(true);
-    const res = await seedInitialDataToFirestore();
-    setIsSeeding(false);
-    if (res.success) {
-      if (onAddToast) onAddToast('Data awal berhasil diunggah ke Firestore Cloud!', 'success');
-    } else {
-      alert('Gagal mengunggah data: ' + (res.error || res.message));
-    }
-  };
-
-  const handleResetToDemo = () => {
-    if (window.confirm('Lepaskan konfigurasi kustom dan kembali ke Mode Demo Lokal?')) {
-      saveFirebaseCustomConfig(null);
-    }
   };
 
   const handleResetVotes = () => {
@@ -115,7 +75,7 @@ export function ElectionSettings({ onAddToast }) {
           Pengaturan Pemilihan &amp; Server
         </h2>
         <p style={{ fontSize: '0.9rem' }}>
-          Kelola status TPS, jadwal pemungutan suara, data sekolah, dan integrasi Firebase Cloud
+          Kelola status operasional TPS, keamanan bilik suara, data sekolah, dan reset suara
         </p>
       </div>
 
@@ -412,147 +372,6 @@ export function ElectionSettings({ onAddToast }) {
           </div>
         )}
       </form>
-
-      {/* Konfigurasi Firebase Cloud (Spark Free Plan) */}
-      <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Database size={20} color="var(--primary)" />
-            <span>Koneksi Firebase Cloud Firestore (Paket Spark Gratis)</span>
-          </h3>
-
-          {isFirebaseConfigured ? (
-            <span className="badge badge-green">
-              <span className="status-dot"></span> TERHUBUNG KE FIREBASE
-            </span>
-          ) : (
-            <span className="badge badge-gold">
-              MODE DEMO / OFFLINE READY
-            </span>
-          )}
-        </div>
-
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          Aplikasi ini dirancang untuk bekerja dengan <strong>Firebase Spark Plan (100% Gratis Tanpa Kartu Kredit)</strong>. Kuota harian gratis Firebase adalah 50.000 read &amp; 20.000 write, sangat melimpah untuk seluruh siswa SMAN 1 Batu.
-        </p>
-
-        <form onSubmit={handleSaveFirebase}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">API Key</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="AIzaSy..."
-                value={firebaseForm.apiKey}
-                onChange={(e) => setFirebaseForm({ ...firebaseForm, apiKey: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Project ID</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="pilketos-sman1batu"
-                value={firebaseForm.projectId}
-                onChange={(e) => setFirebaseForm({ ...firebaseForm, projectId: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Auth Domain</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="pilketos-sman1batu.firebaseapp.com"
-                value={firebaseForm.authDomain}
-                onChange={(e) => setFirebaseForm({ ...firebaseForm, authDomain: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Storage Bucket</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="pilketos-sman1batu.appspot.com"
-                value={firebaseForm.storageBucket}
-                onChange={(e) => setFirebaseForm({ ...firebaseForm, storageBucket: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Messaging Sender ID</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="104928374..."
-                value={firebaseForm.messagingSenderId}
-                onChange={(e) => setFirebaseForm({ ...firebaseForm, messagingSenderId: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">App ID</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="1:104928374:web:..."
-                value={firebaseForm.appId}
-                onChange={(e) => setFirebaseForm({ ...firebaseForm, appId: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {isSuperAdmin && (
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-              {isFirebaseConfigured && (
-                <button type="button" className="btn btn-outline" onClick={handleResetToDemo}>
-                  Gunakan Mode Demo Offline
-                </button>
-              )}
-              <button type="submit" className="btn btn-primary">
-                Simpan Konfigurasi Firebase
-              </button>
-            </div>
-          )}
-        </form>
-
-        {isFirebaseConfigured && isSuperAdmin && (
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '1.25rem',
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem'
-          }}>
-            <div>
-              <div style={{ fontWeight: '700', color: '#166534', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Check size={18} color="#16a34a" />
-                <span>Inisialisasi Database Baru (Upload Data Awal)</span>
-              </div>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: '#15803d', lineHeight: '1.4' }}>
-                Jika project Firebase baru Anda masih kosong, klik tombol ini untuk mengunggah Pasangan Calon, Pengaturan, dan DPT bawaan ke Cloud Firestore.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="btn btn-emerald"
-              disabled={isSeeding}
-              onClick={handleSeedFirestore}
-            >
-              <Upload size={16} />
-              <span>{isSeeding ? 'Mengunggah ke Cloud...' : 'Unggah Data Awal ke Firestore'}</span>
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* Danger Zone: Reset Perolehan Suara */}
       {isSuperAdmin && (
