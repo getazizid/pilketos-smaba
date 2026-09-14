@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { formatIndonesianDate } from './helpers';
 
 /**
  * Download Template Excel Resmi DPT Pilketos SMAN 1 Batu 2026
@@ -254,7 +255,7 @@ export async function exportDptToExcel(students, filename = 'DPT_Pilketos_SMAN1B
       s.gender || 'L',
       s.token,
       isVoted ? 'SUDAH MEMILIH' : 'BELUM MEMILIH',
-      s.votedAt ? new Date(s.votedAt).toLocaleString('id-ID') : '-'
+      s.votedAt ? formatIndonesianDate(s.votedAt) : '-'
     ]);
     row.height = 21;
 

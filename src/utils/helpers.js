@@ -41,6 +41,40 @@ export function formatIndonesianDate(dateStringOrTimestamp) {
   }
 }
 
+export function formatTimeWIB(dateStringOrTimestamp) {
+  if (!dateStringOrTimestamp) return '-';
+  try {
+    let date;
+    if (typeof dateStringOrTimestamp === 'object' && dateStringOrTimestamp !== null) {
+      if (typeof dateStringOrTimestamp.toDate === 'function') {
+        date = dateStringOrTimestamp.toDate();
+      } else if (dateStringOrTimestamp.seconds !== undefined) {
+        date = new Date(dateStringOrTimestamp.seconds * 1000);
+      } else if (dateStringOrTimestamp._seconds !== undefined) {
+        date = new Date(dateStringOrTimestamp._seconds * 1000);
+      } else {
+        date = new Date(dateStringOrTimestamp);
+      }
+    } else {
+      date = new Date(dateStringOrTimestamp);
+    }
+
+    if (isNaN(date.getTime())) return '-';
+
+    const timeStr = new Intl.DateTimeFormat('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Jakarta'
+    }).format(date);
+
+    return `${timeStr.replace(/:/g, '.')} WIB`;
+  } catch {
+    return '-';
+  }
+}
+
 export function formatSimpleDate(dateString) {
   if (!dateString) return '-';
   try {

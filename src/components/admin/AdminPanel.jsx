@@ -380,6 +380,7 @@ export function AdminPanel({ onNavigateToProjector, onNavigateToBallot, onAddToa
                     if (dest === 'projector') onNavigateToProjector();
                     else if (isTabAllowed(dest)) setActiveTab(dest);
                   }}
+                  onAddToast={onAddToast}
                 />
               )}
 

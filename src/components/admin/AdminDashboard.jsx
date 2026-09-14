@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useElection } from '../../context/ElectionContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -11,11 +11,14 @@ import {
   TrendingUp, 
   ShieldAlert, 
   ShieldCheck,
-  FileText 
+  FileText,
+  Wrench,
+  HelpCircle
 } from 'lucide-react';
+import { Modal } from '../common/Modal';
 import { formatNumber, formatIndonesianDate, sortClassNames, getStandardSchoolClasses } from '../../utils/helpers';
 
-export function AdminDashboard({ onNavigate }) {
+export function AdminDashboard({ onNavigate, onAddToast }) {
   const { 
     candidates, 
     students, 
@@ -29,13 +32,63 @@ export function AdminDashboard({ onNavigate }) {
     settings,
     dptBreakdown,
     votedBreakdown,
-    unvotedBreakdown
+    unvotedBreakdown,
+    adjustCandidateVote,
+    reconcileCandidateVotes
   } = useElection();
   const { adminUser } = useAuth();
 
   const [activeClassTab, setActiveClassTab] = useState('ALL'); // 'ALL', 'X', 'XI', 'XII'
   const [classSearch, setClassSearch] = useState('');
   const [onlyWithVoters, setOnlyWithVoters] = useState(true);
+
+  // State Rekonsiliasi Integritas Data Suara
+  const [isReconcileModalOpen, setIsReconcileModalOpen] = useState(false);
+  const [reconcileTab, setReconcileTab] = useState('quick'); // 'quick' | 'manual'
+  const [manualCounts, setManualCounts] = useState({});
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [successBanner, setSuccessBanner] = useState(null);
+  const [reconcileReason, setReconcileReason] = useState('Koreksi anomali data pasca pemilih di-reset dan mencoblos ulang');
+
+  const discrepancy = totalVotes - totalVotedStudents;
+
+  useEffect(() => {
+    if (isReconcileModalOpen) {
+      const counts = {};
+      candidates.forEach(c => {
+        counts[c.id] = c.voteCount || 0;
+      });
+      setManualCounts(counts);
+      setSuccessBanner(null);
+    }
+  }, [isReconcileModalOpen, candidates]);
+
+  const handleQuickDeduct = async (candidate, delta = -1) => {
+    setIsProcessing(true);
+    try {
+      await adjustCandidateVote(candidate.id, delta, reconcileReason || 'Koreksi anomali data pasca reset pemilih');
+      setSuccessBanner(`Berhasil! Suara Paslon No. ${candidate.number} (${candidate.chairmanName}) telah disesuaikan (${delta} suara). Total perolehan suara paslon kini ${totalVotes + delta} suara, persis sama dengan total pemilih yang mencoblos (${totalVotedStudents} orang). Status sistem telah kembali HIJAU (100% SINKRON & JURDIL)!`);
+      if (onAddToast) onAddToast(`Status integritas berhasil disinkronkan. Suara Paslon #${candidate.number} disesuaikan.`, 'success');
+    } catch (err) {
+      alert('Gagal menyesuaikan suara paslon: ' + err.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleManualReconcile = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    try {
+      await reconcileCandidateVotes(manualCounts, reconcileReason || 'Koreksi manual integritas suara');
+      setSuccessBanner(`Rekonsiliasi manual berhasil diterapkan! Data perolehan suara paslon kini telah disinkronkan dengan pemilih mencoblos. Status sistem kembali HIJAU!`);
+      if (onAddToast) onAddToast('Rekonsiliasi suara paslon berhasil disimpan.', 'success');
+    } catch (err) {
+      alert('Gagal rekonsiliasi manual: ' + err.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Agregasi partisipasi suara untuk setiap masing-masing kelas individual (X-1..X-12, XI-1..XI-12, XII-1..XII-12, dll)
   const perClassStats = useMemo(() => {
@@ -245,20 +298,48 @@ export function AdminDashboard({ onNavigate }) {
           </div>
         </div>
 
-        <div style={{
-          padding: '0.35rem 0.85rem',
-          borderRadius: 'var(--radius-pill)',
-          background: isTallyValid ? '#dcfce7' : '#fee2e2',
-          border: `1px solid ${isTallyValid ? '#86efac' : '#fca5a5'}`,
-          fontSize: '0.75rem',
-          fontWeight: '700',
-          color: isTallyValid ? '#15803d' : '#b91c1c',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.4rem'
-        }}>
-          <span className="status-dot" style={{ background: isTallyValid ? '#16a34a' : '#dc2626' }}></span>
-          <span>{isTallyValid ? 'STATUS: 100% VALID & SINKRON' : 'STATUS: ANOMALI PERIKSA'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => {
+              setSuccessBanner(null);
+              setIsReconcileModalOpen(true);
+            }}
+            style={{
+              background: isTallyValid ? '#f8fafc' : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              color: isTallyValid ? 'var(--text-secondary)' : '#ffffff',
+              border: isTallyValid ? '1px solid #cbd5e1' : 'none',
+              padding: '0.42rem 0.9rem',
+              borderRadius: 'var(--radius-pill)',
+              fontSize: '0.78rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              boxShadow: isTallyValid ? 'none' : '0 2px 8px rgba(220, 38, 38, 0.35)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Wrench size={14} color={isTallyValid ? '#475569' : '#ffffff'} />
+            <span>{isTallyValid ? 'Opsi Rekonsiliasi' : 'Koreksi / Rekonsiliasi Suara (Ubah Jadi Hijau)'}</span>
+          </button>
+
+          <div style={{
+            padding: '0.35rem 0.85rem',
+            borderRadius: 'var(--radius-pill)',
+            background: isTallyValid ? '#dcfce7' : '#fee2e2',
+            border: `1px solid ${isTallyValid ? '#86efac' : '#fca5a5'}`,
+            fontSize: '0.75rem',
+            fontWeight: '700',
+            color: isTallyValid ? '#15803d' : '#b91c1c',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}>
+            <span className="status-dot" style={{ background: isTallyValid ? '#16a34a' : '#dc2626' }}></span>
+            <span>{isTallyValid ? 'STATUS: 100% VALID & SINKRON' : 'STATUS: ANOMALI PERIKSA'}</span>
+          </div>
         </div>
       </div>
 
@@ -683,6 +764,263 @@ export function AdminDashboard({ onNavigate }) {
           </div>
         </div>
       </div>
+      {/* Modal Rekonsiliasi Integritas Data Suara */}
+      <Modal
+        isOpen={isReconcileModalOpen}
+        onClose={() => {
+          if (!isProcessing) setIsReconcileModalOpen(false);
+        }}
+        title="Rekonsiliasi Integritas Data Suara (Koreksi Anomali)"
+        maxWidth="680px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Success Banner if reconciled */}
+          {successBanner ? (
+            <div style={{
+              background: '#ecfdf5',
+              border: '1.5px solid #a7f3d0',
+              borderRadius: 'var(--radius-md)',
+              padding: '1.25rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.85rem'
+            }}>
+              <CheckCircle2 size={24} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <h4 style={{ color: '#065f46', fontSize: '1rem', fontWeight: '700', marginBottom: '0.35rem' }}>
+                  Data Berhasil Direkonsiliasi!
+                </h4>
+                <p style={{ color: '#047857', fontSize: '0.88rem', lineHeight: '1.5', marginBottom: '0.75rem' }}>
+                  {successBanner}
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => setIsReconcileModalOpen(false)}
+                  >
+                    Tutup & Lihat Dashboard (Status Hijau)
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Ringkasan Perbandingan Suara */}
+              <div style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: 'var(--radius-md)',
+                padding: '1rem 1.25rem'
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div style={{ background: '#ffffff', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>TOTAL SUARA PASLON</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: '800', color: discrepancy !== 0 ? '#dc2626' : '#16a34a' }}>
+                      {formatNumber(totalVotes)}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>PEMILIH MENCOBLOS</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0f172a' }}>
+                      {formatNumber(totalVotedStudents)}
+                    </div>
+                  </div>
+
+                  <div style={{ 
+                    background: discrepancy !== 0 ? '#fee2e2' : '#dcfce7', 
+                    padding: '0.75rem', 
+                    borderRadius: 'var(--radius-sm)', 
+                    border: `1px solid ${discrepancy !== 0 ? '#fca5a5' : '#86efac'}`, 
+                    textAlign: 'center' 
+                  }}>
+                    <div style={{ fontSize: '0.75rem', color: discrepancy !== 0 ? '#991b1b' : '#166534', fontWeight: '700' }}>STATUS SELISIH</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: '800', color: discrepancy !== 0 ? '#dc2626' : '#16a34a' }}>
+                      {discrepancy > 0 ? `+${discrepancy} Suara Paslon` : discrepancy < 0 ? `${discrepancy} Suara Paslon` : '0 (Sinkron)'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.8rem', color: '#475569', lineHeight: '1.45' }}>
+                  <HelpCircle size={16} color="#0284c7" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong>Penyebab:</strong> Ketika hak pilih seorang siswa di-reset oleh Admin lalu siswa tersebut mencoblos ulang di bilik, suara pencoblosan pertamanya masih tersimpan di salah satu Paslon (karena asas Rahasia mencegah sistem mengetahui paslon yang ia pilih sebelumnya). Untuk mengembalikan status menjadi <strong>HIJAU</strong>, kurangi 1 suara pada Paslon yang sebelumnya dicoblos.
+                  </div>
+                </div>
+              </div>
+
+              {/* Mode Navigasi Tab */}
+              <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setReconcileTab('quick')}
+                  style={{
+                    padding: '0.45rem 1rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    background: reconcileTab === 'quick' ? 'var(--primary)' : 'transparent',
+                    color: reconcileTab === 'quick' ? '#ffffff' : 'var(--text-secondary)'
+                  }}
+                >
+                  Pilihan Cepat (1-Klik Koreksi Paslon)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReconcileTab('manual')}
+                  style={{
+                    padding: '0.45rem 1rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    background: reconcileTab === 'manual' ? 'var(--primary)' : 'transparent',
+                    color: reconcileTab === 'manual' ? '#ffffff' : 'var(--text-secondary)'
+                  }}
+                >
+                  Penyesuaian Manual Angka Suara
+                </button>
+              </div>
+
+              {reconcileTab === 'quick' ? (
+                <div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+                    Pilih Paslon yang akan dikurangi {Math.abs(discrepancy) || 1} suara agar total paslon menjadi {formatNumber(totalVotedStudents)} suara:
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {candidates.map((cand) => (
+                      <div
+                        key={cand.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.75rem 1rem',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--border-subtle)',
+                          background: '#ffffff',
+                          flexWrap: 'wrap',
+                          gap: '0.75rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            background: 'var(--gold)',
+                            color: '#000',
+                            fontWeight: '800',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1rem'
+                          }}>
+                            #{cand.number}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.92rem' }}>
+                              {cand.chairmanName} & {cand.viceChairmanName}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              Perolehan Saat Ini: <strong style={{ color: 'var(--primary)' }}>{formatNumber(cand.voteCount || 0)} suara</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            disabled={isProcessing || (cand.voteCount || 0) <= 0}
+                            onClick={() => handleQuickDeduct(cand, -1)}
+                            className="btn btn-sm"
+                            style={{
+                              background: '#ef4444',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: '600',
+                              padding: '0.4rem 0.85rem',
+                              borderRadius: 'var(--radius-md)',
+                              cursor: (isProcessing || (cand.voteCount || 0) <= 0) ? 'not-allowed' : 'pointer'
+                            }}
+                          >
+                            Kurangi 1 Suara (Menjadi {(cand.voteCount || 0) - 1})
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleManualReconcile}>
+                  <div style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+                    Atur perolehan suara setiap pasangan calon secara manual:
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                    {candidates.map((cand) => (
+                      <div key={cand.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <span style={{ fontWeight: '700', color: 'var(--primary)' }}>#{cand.number}</span>
+                          <span style={{ fontSize: '0.88rem', fontWeight: '600' }}>{cand.chairmanName}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input
+                            type="number"
+                            min="0"
+                            value={manualCounts[cand.id] ?? (cand.voteCount || 0)}
+                            onChange={(e) => {
+                              const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                              setManualCounts(prev => ({ ...prev, [cand.id]: val }));
+                            }}
+                            className="form-input"
+                            style={{ width: '90px', textAlign: 'right', padding: '0.35rem 0.5rem', fontWeight: '700' }}
+                          />
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>suara</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    background: Object.values(manualCounts).reduce((a, b) => a + Number(b || 0), 0) === totalVotedStudents ? '#ecfdf5' : '#fef2f2',
+                    border: `1px solid ${Object.values(manualCounts).reduce((a, b) => a + Number(b || 0), 0) === totalVotedStudents ? '#a7f3d0' : '#fecaca'}`,
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '1rem'
+                  }}>
+                    <span>Total Suara Baru: <strong>{Object.values(manualCounts).reduce((a, b) => a + Number(b || 0), 0)}</strong> suara</span>
+                    <span>Target Pemilih: <strong>{totalVotedStudents}</strong> orang</span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="btn btn-primary"
+                    style={{ width: '100%' }}
+                  >
+                    {isProcessing ? 'Menyimpan Rekonsiliasi...' : 'Terapkan Rekonsiliasi Suara Manual'}
+                  </button>
+                </form>
+              )}
+
+              {/* Catatan Integritas & Audit */}
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
+                🛡️ Seluruh tindakan rekonsiliasi suara akan dicatat secara permanen di <strong>Audit Log Aktivitas</strong> dan disinkronkan langsung ke Cloud Firestore.
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

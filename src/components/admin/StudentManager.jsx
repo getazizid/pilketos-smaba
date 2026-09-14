@@ -21,12 +21,13 @@ import {
 } from 'lucide-react';
 import { generateVoterToken } from '../../utils/tokenGenerator';
 import { downloadDptTemplateExcel, exportDptToExcel, parseDptExcelFile } from '../../utils/excelService';
-import { sortClassNames, getStandardSchoolClasses } from '../../utils/helpers';
+import { sortClassNames, getStandardSchoolClasses, formatTimeWIB } from '../../utils/helpers';
 import { Modal } from '../common/Modal';
 import { Pagination } from '../common/Pagination';
 
 export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const { 
+    candidates,
     students, 
     addStudent, 
     updateStudent, 
@@ -50,6 +51,10 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
   const [filterClass, setFilterClass] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'VOTED', 'NOT_VOTED'
   const [selectedIds, setSelectedIds] = useState([]);
+
+  // State Reset Hak Suara & Pengurangan Paslon
+  const [resetModalStudent, setResetModalStudent] = useState(null);
+  const [deductCandidateId, setDeductCandidateId] = useState('');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -283,10 +288,22 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
 
   const handleResetVote = (student) => {
     if (isReadOnly) return;
-    if (window.confirm(`Reset hak pilih untuk ${student.name} (${student.nisn})? Pemilih ini akan dapat memilih kembali.`)) {
-      resetStudentVote(student.id);
-      if (onAddToast) onAddToast(`Hak pilih untuk ${student.name} berhasil di-reset.`, 'info');
+    if (student.hasVoted) {
+      setResetModalStudent(student);
+      setDeductCandidateId('');
+    } else {
+      if (window.confirm(`Reset hak pilih untuk ${student.name} (${student.nisn})?`)) {
+        resetStudentVote(student.id);
+        if (onAddToast) onAddToast(`Hak pilih untuk ${student.name} berhasil di-reset.`, 'info');
+      }
     }
+  };
+
+  const confirmResetVoteWithDeduction = () => {
+    if (!resetModalStudent) return;
+    resetStudentVote(resetModalStudent.id, deductCandidateId || null);
+    if (onAddToast) onAddToast(`Hak pilih untuk ${resetModalStudent.name} berhasil di-reset.`, 'info');
+    setResetModalStudent(null);
   };
 
   const handleDelete = (student) => {
@@ -919,7 +936,7 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
                       )}
                     </td>
                     <td style={{ fontSize: '0.8rem' }}>
-                      {s.votedAt ? new Date(s.votedAt).toLocaleTimeString('id-ID') + ' WIB' : '-'}
+                      {formatTimeWIB(s.votedAt)}
                     </td>
                     {!isReadOnly && (
                       <td>
@@ -1121,6 +1138,76 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
             </button>
           </div>
         </form>
+      </Modal>
+      {/* Modal Konfirmasi Reset Suara Pemilih */}
+      <Modal
+        isOpen={Boolean(resetModalStudent)}
+        onClose={() => setResetModalStudent(null)}
+        title="Reset Hak Pilih Pemilih (Bisa Mencoblos Ulang)"
+        maxWidth="560px"
+      >
+        {resetModalStudent && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
+              <div style={{ fontWeight: '700', color: '#991b1b', marginBottom: '0.35rem' }}>
+                Perhatian: Pemilih Sudah Tercatat Pernah Mencoblos
+              </div>
+              <div style={{ fontSize: '0.88rem', color: '#7f1d1d', lineHeight: '1.45' }}>
+                Pemilih <strong>{resetModalStudent.name}</strong> ({resetModalStudent.nisn} - {resetModalStudent.class}) sebelumnya telah menggunakan hak suaranya.
+              </div>
+            </div>
+
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              Karena suara pemilu bersifat rahasia, sistem tidak mencatat paslon mana yang ia coblos sebelumnya. Jika di-reset agar mencoblos ulang di bilik, apakah Anda ingin sistem langsung mengurangi 1 suara dari paslon tertentu untuk menjaga sinkronisasi data (mencegah anomali suara)?
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: '700' }}>Pilihan Pengurangan Suara Paslon:</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.35rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.88rem', cursor: 'pointer', padding: '0.5rem 0.75rem', background: deductCandidateId === '' ? 'rgba(59, 130, 246, 0.08)' : '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0' }}>
+                  <input
+                    type="radio"
+                    name="deductCandidate"
+                    value=""
+                    checked={deductCandidateId === ''}
+                    onChange={() => setDeductCandidateId('')}
+                  />
+                  <span><strong>Tidak Dikurangi Sekarang</strong> (Saya akan sesuaikan manual di Dashboard jika diperlukan)</span>
+                </label>
+
+                {candidates.map((cand) => (
+                  <label key={cand.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.88rem', cursor: 'pointer', padding: '0.5rem 0.75rem', background: deductCandidateId === cand.id ? 'rgba(59, 130, 246, 0.08)' : '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0' }}>
+                    <input
+                      type="radio"
+                      name="deductCandidate"
+                      value={cand.id}
+                      checked={deductCandidateId === cand.id}
+                      onChange={() => setDeductCandidateId(cand.id)}
+                    />
+                    <span>Kurangi 1 suara dari <strong>Paslon #{cand.number} ({cand.chairmanName})</strong></span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setResetModalStudent(null)}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={confirmResetVoteWithDeduction}
+              >
+                Konfirmasi Reset Hak Pilih
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

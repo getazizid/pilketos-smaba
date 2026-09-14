@@ -20,7 +20,8 @@ export function CandidateManager({ onAddToast }) {
     viceChairmanName: '',
     chairmanClass: '',
     viceChairmanClass: '',
-    photoUrl: ''
+    photoUrl: '',
+    voteCount: 0
   });
 
   const openAddModal = () => {
@@ -31,7 +32,8 @@ export function CandidateManager({ onAddToast }) {
       viceChairmanName: '',
       chairmanClass: 'XI-1',
       viceChairmanClass: 'X-1',
-      photoUrl: '/assets/paslon1.jpg'
+      photoUrl: '/assets/paslon1.jpg',
+      voteCount: 0
     });
     setIsModalOpen(true);
   };
@@ -44,7 +46,8 @@ export function CandidateManager({ onAddToast }) {
       viceChairmanName: c.viceChairmanName,
       chairmanClass: c.chairmanClass,
       viceChairmanClass: c.viceChairmanClass,
-      photoUrl: c.photoUrl
+      photoUrl: c.photoUrl,
+      voteCount: c.voteCount || 0
     });
     setIsModalOpen(true);
   };
@@ -59,7 +62,8 @@ export function CandidateManager({ onAddToast }) {
       viceChairmanName: formData.viceChairmanName.trim(),
       chairmanClass: formData.chairmanClass.trim(),
       viceChairmanClass: formData.viceChairmanClass.trim(),
-      photoUrl: formData.photoUrl || '/assets/paslon1.jpg'
+      photoUrl: formData.photoUrl || '/assets/paslon1.jpg',
+      ...(formData.voteCount !== undefined ? { voteCount: Number(formData.voteCount) } : {})
     };
 
     if (editingCandidate) {
@@ -305,6 +309,23 @@ export function CandidateManager({ onAddToast }) {
             </div>
           </div>
 
+          {editingCandidate && (
+            <div className="form-group" style={{ background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0', marginTop: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
+                Perolehan Suara Sah (Koreksi / Penyesuaian Administratif)
+              </label>
+              <input
+                type="number"
+                min="0"
+                className="form-input"
+                value={formData.voteCount ?? 0}
+                onChange={(e) => setFormData({ ...formData, voteCount: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+              />
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                *Ubah angka ini hanya untuk rekonsiliasi jika terjadi anomali atau ketidaksesuaian suara pasca-reset.
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
             <button type="button" className="btn btn-outline" onClick={() => setIsModalOpen(false)}>

@@ -99,11 +99,9 @@ export function ElectionProvider({ children }) {
     }
   });
 
-  // Sinkronisasi lokal ke localStorage jika Firebase tidak aktif
+  // Sinkronisasi lokal ke localStorage
   useEffect(() => {
-    if (!isFirebaseConfigured) {
-      localStorage.setItem('pilketos_candidates_v2', JSON.stringify(candidates));
-    }
+    localStorage.setItem('pilketos_candidates_v2', JSON.stringify(candidates));
   }, [candidates]);
 
   useEffect(() => {
@@ -577,7 +575,10 @@ export function ElectionProvider({ children }) {
     addLog('Seluruh data DPT pemilih (Siswa, Guru, Tendik) telah dikosongkan oleh Admin.', 'DANGER');
   };
 
-  const resetStudentVote = async (id) => {
+  const resetStudentVote = async (id, deductCandidateId = null) => {
+    const student = students.find(s => s.id === id);
+    const studentName = student ? student.name : id;
+
     if (isFirebaseConfigured && db) {
       try {
         await setDoc(doc(db, 'students', id), {
@@ -585,12 +586,101 @@ export function ElectionProvider({ children }) {
           votedAt: null
         }, { merge: true });
         console.log(`[Firestore] Status suara siswa ${id} di-reset di cloud.`);
+
+        if (deductCandidateId) {
+          const candRef = doc(db, 'candidates', deductCandidateId);
+          await updateDoc(candRef, {
+            voteCount: increment(-1)
+          }).catch(async () => {
+            const cand = candidates.find(c => c.id === deductCandidateId);
+            const currentCount = cand ? Math.max(0, (cand.voteCount || 0) - 1) : 0;
+            await setDoc(candRef, { voteCount: currentCount }, { merge: true });
+          });
+          console.log(`[Firestore] Suara paslon ${deductCandidateId} dikurangi 1 di cloud.`);
+        }
       } catch (err) {
         console.error('[Firestore] Gagal reset vote siswa di Firestore:', err);
       }
     }
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, hasVoted: false, votedAt: null } : s));
-    addLog(`Hak pilih siswa di-reset oleh Admin.`, 'WARNING');
+
+    setStudents(prev => {
+      const updated = prev.map(s => s.id === id ? { ...s, hasVoted: false, votedAt: null } : s);
+      localStorage.setItem('pilketos_students_v2', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (deductCandidateId) {
+      setCandidates(prev => {
+        const updated = prev.map(c => c.id === deductCandidateId ? { ...c, voteCount: Math.max(0, (c.voteCount || 0) - 1) } : c);
+        localStorage.setItem('pilketos_candidates_v2', JSON.stringify(updated));
+        return updated;
+      });
+      const targetCand = candidates.find(c => c.id === deductCandidateId);
+      addLog(`Hak pilih ${studentName} di-reset dan 1 suara Paslon No. ${targetCand?.number || deductCandidateId} dikurangi untuk sinkronisasi data.`, 'WARNING');
+    } else {
+      addLog(`Hak pilih ${studentName} di-reset oleh Admin. (Catatan: Bila pemilih mencoblos ulang, pastikan rekonsiliasi suara paslon agar data tetap sinkron).`, 'WARNING');
+    }
+  };
+
+  // Penyesuaian Suara Paslon (Rekonsiliasi Integritas / Koreksi Anomali)
+  const adjustCandidateVote = async (candidateId, delta, reason = 'Rekonsiliasi integritas data') => {
+    const candidate = candidates.find(c => c.id === candidateId);
+    if (!candidate) return { success: false, message: 'Paslon tidak ditemukan' };
+
+    const newVoteCount = Math.max(0, (Number(candidate.voteCount) || 0) + delta);
+
+    if (isFirebaseConfigured && db) {
+      try {
+        const candRef = doc(db, 'candidates', candidateId);
+        await updateDoc(candRef, {
+          voteCount: newVoteCount
+        }).catch(async () => {
+          await setDoc(candRef, { id: candidateId, voteCount: newVoteCount }, { merge: true });
+        });
+        console.log(`[Firestore] Suara paslon ${candidateId} disesuaikan menjadi ${newVoteCount} di cloud.`);
+      } catch (err) {
+        console.error('[Firestore] Gagal sesuaikan suara paslon di Firestore:', err);
+      }
+    }
+
+    setCandidates(prev => {
+      const updated = prev.map(c => c.id === candidateId ? { ...c, voteCount: newVoteCount } : c);
+      localStorage.setItem('pilketos_candidates_v2', JSON.stringify(updated));
+      return updated;
+    });
+
+    addLog(`[Koreksi Suara] ${reason}: Paslon No. ${candidate.number} (${candidate.chairmanName}) disesuaikan (${delta > 0 ? '+' : ''}${delta} suara, kini ${newVoteCount} suara).`, 'SUCCESS');
+    return { success: true, newVoteCount };
+  };
+
+  // Rekonsiliasi Massal Perolehan Suara Paslon
+  const reconcileCandidateVotes = async (updatedVoteCounts, reason = 'Rekonsiliasi data suara') => {
+    if (isFirebaseConfigured && db) {
+      try {
+        const batch = writeBatch(db);
+        Object.entries(updatedVoteCounts).forEach(([candId, count]) => {
+          batch.update(doc(db, 'candidates', candId), { voteCount: Math.max(0, Number(count) || 0) });
+        });
+        await batch.commit();
+        console.log('[Firestore] Rekonsiliasi massal suara paslon berhasil dikomit ke cloud.');
+      } catch (err) {
+        console.error('[Firestore] Gagal rekonsiliasi suara di Firestore:', err);
+      }
+    }
+
+    setCandidates(prev => {
+      const updated = prev.map(c => {
+        if (updatedVoteCounts[c.id] !== undefined) {
+          return { ...c, voteCount: Math.max(0, Number(updatedVoteCounts[c.id]) || 0) };
+        }
+        return c;
+      });
+      localStorage.setItem('pilketos_candidates_v2', JSON.stringify(updated));
+      return updated;
+    });
+
+    addLog(`[Koreksi Suara] ${reason}: Perolehan suara paslon telah diselaraskan dengan data pemilih.`, 'SUCCESS');
+    return { success: true };
   };
 
   // Pengaturan Pemilu
@@ -813,6 +903,8 @@ export function ElectionProvider({ children }) {
         deleteBulkStudents,
         deleteAllStudents,
         resetStudentVote,
+        adjustCandidateVote,
+        reconcileCandidateVotes,
         updateSettings,
         lockAllMonitoringScreens,
         resetAllVotes,
