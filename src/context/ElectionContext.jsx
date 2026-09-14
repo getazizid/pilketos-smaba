@@ -143,14 +143,28 @@ export function ElectionProvider({ children }) {
       }
     }, (err) => console.warn('Firestore settings listener:', err));
 
-    // 3. Listen to Students
-    const unsubStudents = onSnapshot(collection(db, 'students'), (snapshot) => {
-      if (!snapshot.empty) {
-        const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        setStudents(loaded);
-        localStorage.setItem('pilketos_students_v2', JSON.stringify(loaded));
+    // 3. Listen to Students (HANYA untuk Laptop Bilik TPS Terdaftar atau Admin)
+    // Pengunjung umum / HP siswa yang melihat Quick Count TIDAK perlu membebani 1.357 pembacaan per orang
+    let unsubStudents = () => {};
+    const shouldListenStudents = () => {
+      try {
+        const isTps = sessionStorage.getItem('pilketos_tps_authorized') === 'true';
+        const isAdmin = Boolean(sessionStorage.getItem('pilketos_admin_user'));
+        return isTps || isAdmin;
+      } catch {
+        return false;
       }
-    }, (err) => console.warn('Firestore students listener:', err.message || err));
+    };
+
+    if (shouldListenStudents()) {
+      unsubStudents = onSnapshot(collection(db, 'students'), (snapshot) => {
+        if (!snapshot.empty) {
+          const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          setStudents(loaded);
+          localStorage.setItem('pilketos_students_v2', JSON.stringify(loaded));
+        }
+      }, (err) => console.warn('Firestore students listener:', err.message || err));
+    }
 
     // 4. Listen to Users (Staff/Operators)
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
@@ -721,18 +735,25 @@ export function ElectionProvider({ children }) {
     addLog(`Akun staf dihapus permanen.`, 'WARNING');
   };
 
-  // Statistik Real-time
-  const totalDpt = students.length;
+  // Statistik Real-time (Adaptif: menghitung dari DPT lokal jika ada, atau default resmi 1.357 pemilih)
+  const totalDpt = students.length > 0 ? students.length : (settings.totalDpt || 1357);
   const totalVotedStudents = students.filter(s => s.hasVoted).length;
   const totalVotes = candidates.reduce((acc, c) => acc + (c.voteCount || 0), 0);
-  const isTallyValid = totalVotes === totalVotedStudents;
+  const isTallyValid = totalVotedStudents > 0 ? (totalVotes === totalVotedStudents) : true;
   const participationPercentage = totalDpt > 0 ? ((totalVotes / totalDpt) * 100).toFixed(1) : 0;
   const totalUnvoted = Math.max(0, totalDpt - totalVotes);
 
-  // Breakdown per kategori pemilih (Siswa, Guru, Tenaga Kependidikan)
-  const totalSiswa = students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length;
-  const totalGuru = students.filter(s => s.voterType === 'GURU').length;
-  const totalTendik = students.filter(s => s.voterType === 'TENDIK').length;
+  // Breakdown per kategori pemilih (Siswa: 1272, Guru: 65, Tendik: 20 = 1357)
+  const totalSiswa = students.length > 0 
+    ? students.filter(s => (s.voterType || 'SISWA') === 'SISWA').length 
+    : 1272;
+  const totalGuru = students.length > 0 
+    ? students.filter(s => s.voterType === 'GURU').length 
+    : 65;
+  const totalTendik = students.length > 0 
+    ? students.filter(s => s.voterType === 'TENDIK').length 
+    : 20;
+
   const dptBreakdown = {
     siswa: totalSiswa,
     guru: totalGuru,
@@ -748,9 +769,9 @@ export function ElectionProvider({ children }) {
 
   // Breakdown pemilih yang belum menggunakan hak suara
   const unvotedBreakdown = {
-    siswa: students.filter(s => !s.hasVoted && (s.voterType || 'SISWA') === 'SISWA').length,
-    guru: students.filter(s => !s.hasVoted && s.voterType === 'GURU').length,
-    tendik: students.filter(s => !s.hasVoted && s.voterType === 'TENDIK').length
+    siswa: Math.max(0, totalSiswa - votedBreakdown.siswa),
+    guru: Math.max(0, totalGuru - votedBreakdown.guru),
+    tendik: Math.max(0, totalTendik - votedBreakdown.tendik)
   };
 
   return (
