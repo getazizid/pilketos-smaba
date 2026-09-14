@@ -387,7 +387,7 @@ export async function parseDptExcelFile(file) {
       return String(cell.value).trim();
     };
 
-    const nisn = getVal(colIndexes.nisn);
+    const nisn = getVal(colIndexes.nisn).replace(/\s+/g, '');
     const name = getVal(colIndexes.name);
 
     // Minimal harus ada NISN atau Nama
@@ -403,7 +403,7 @@ export async function parseDptExcelFile(file) {
     const studentClass = getVal(colIndexes.class) || (voterType === 'SISWA' ? 'X-1' : voterType === 'GURU' ? 'Guru' : 'Tendik');
     const rawGender = getVal(colIndexes.gender).toUpperCase();
     const gender = (rawGender === 'P' || rawGender.startsWith('PEREMPUAN')) ? 'P' : 'L';
-    const token = getVal(colIndexes.token).toUpperCase();
+    const token = getVal(colIndexes.token).replace(/\s+/g, '').toUpperCase();
 
     result.push({
       nisn: nisn || ('00' + Math.floor(10000000 + Math.random() * 90000000)),
@@ -440,23 +440,23 @@ function parseCsvFallback(csvText) {
           else cat = 'SISWA';
         }
         result.push({
-          nisn: cols[0],
+          nisn: (cols[0] || '').replace(/\s+/g, ''),
           name: cols[1],
           voterType: cat,
           class: cols[3] || 'X-1',
           gender: cols[4] || 'L',
-          token: cols[5] || '',
+          token: (cols[5] || '').replace(/\s+/g, '').toUpperCase(),
           hasVoted: cols[6] === 'SUDAH' || cols[6] === 'true',
           votedAt: cols[7] || null
         });
       } else {
         result.push({
-          nisn: cols[0],
+          nisn: (cols[0] || '').replace(/\s+/g, ''),
           name: cols[1],
           voterType: 'SISWA',
           class: cols[2] || 'X-1',
           gender: cols[3] || 'L',
-          token: cols[4] || '',
+          token: (cols[4] || '').replace(/\s+/g, '').toUpperCase(),
           hasVoted: cols[5] === 'SUDAH' || cols[5] === 'true',
           votedAt: cols[6] || null
         });

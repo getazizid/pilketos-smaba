@@ -34,6 +34,16 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem('pilketos_voter');
   };
 
+  // Update status pemilih saat berhasil mencoblos
+  const markVoterAsVoted = (timestamp = new Date().toISOString()) => {
+    setCurrentVoter(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, hasVoted: true, votedAt: timestamp };
+      sessionStorage.setItem('pilketos_voter', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   // Login Staf / Admin
   const loginAdmin = (user) => {
     setAdminUser(user);
@@ -51,6 +61,7 @@ export function AuthProvider({ children }) {
         currentVoter,
         loginVoter,
         logoutVoter,
+        markVoterAsVoted,
         adminUser,
         loginAdmin,
         logoutAdmin,

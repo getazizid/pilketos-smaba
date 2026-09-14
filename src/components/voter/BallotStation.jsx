@@ -17,7 +17,7 @@ export function BallotStation({ onAddToast }) {
 }
 
 function BallotStationInner({ onAddToast }) {
-  const { currentVoter } = useAuth();
+  const { currentVoter, markVoterAsVoted, logoutVoter } = useAuth();
   const { candidates, submitVote, settings } = useElection();
 
   const [selectedCandidateForVote, setSelectedCandidateForVote] = useState(null);
@@ -28,13 +28,20 @@ function BallotStationInner({ onAddToast }) {
     return <VoterLogin />;
   }
 
-  // Jika siswa sudah memilih, tampilkan struk bukti memilih
+  // Jika pemilih sudah memilih, tampilkan struk bukti memilih
   if (currentVoter.hasVoted || votedSuccessData) {
     return (
       <VoteReceipt
-        voter={currentVoter}
+        voter={{
+          ...currentVoter,
+          hasVoted: true,
+          votedAt: votedSuccessData ? votedSuccessData.timestamp : currentVoter.votedAt
+        }}
         votedTimestamp={votedSuccessData ? votedSuccessData.timestamp : currentVoter.votedAt}
-        onFinish={() => setVotedSuccessData(null)}
+        onFinish={() => {
+          setVotedSuccessData(null);
+          logoutVoter();
+        }}
       />
     );
   }
@@ -43,6 +50,9 @@ function BallotStationInner({ onAddToast }) {
   const handleConfirmVote = async (candidate) => {
     try {
       const result = await submitVote(currentVoter.id, candidate.id);
+      if (markVoterAsVoted) {
+        markVoterAsVoted(result.timestamp);
+      }
       setSelectedCandidateForVote(null);
       setVotedSuccessData(result);
       if (onAddToast) {
@@ -51,7 +61,7 @@ function BallotStationInner({ onAddToast }) {
     } catch (err) {
       console.error('Gagal mencoblos:', err);
       if (onAddToast) {
-        onAddToast('Terjadi kesalahan saat mengirim suara. Silakan coba kembali.', 'error');
+        onAddToast(err.message || 'Terjadi kesalahan saat mengirim suara. Silakan coba kembali.', 'error');
       }
     }
   };
@@ -90,7 +100,7 @@ function BallotStationInner({ onAddToast }) {
               {currentVoter.name}
             </h2>
             <div style={{ fontSize: '0.85rem', color: 'var(--gold)', fontWeight: '600' }}>
-              NISN: {currentVoter.nisn} &bull; Kelas: {currentVoter.class}
+              {(currentVoter.voterType === 'GURU' || currentVoter.voterType === 'TENDIK' || (currentVoter.nisn && currentVoter.nisn.length > 12)) ? 'NIP' : 'NISN'}: {currentVoter.nisn} &bull; {currentVoter.voterType === 'GURU' || currentVoter.voterType === 'TENDIK' ? 'Jabatan' : 'Kelas'}: {currentVoter.class}
             </div>
           </div>
         </div>

@@ -13,6 +13,7 @@ import {
   getDocs,
   increment, 
   setDoc, 
+  updateDoc,
   deleteDoc,
   writeBatch,
   serverTimestamp,
@@ -144,10 +145,12 @@ export function ElectionProvider({ children }) {
 
     // 3. Listen to Students
     const unsubStudents = onSnapshot(collection(db, 'students'), (snapshot) => {
-      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setStudents(loaded);
-      localStorage.setItem('pilketos_students_v2', JSON.stringify(loaded));
-    }, (err) => console.warn('Firestore students listener:', err));
+      if (!snapshot.empty) {
+        const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        setStudents(loaded);
+        localStorage.setItem('pilketos_students_v2', JSON.stringify(loaded));
+      }
+    }, (err) => console.warn('Firestore students listener:', err.message || err));
 
     // 4. Listen to Users (Staff/Operators)
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
@@ -199,22 +202,84 @@ export function ElectionProvider({ children }) {
     setAuditLogs(prev => [newLog, ...prev.slice(0, 99)]);
   };
 
+  // Sinkronisasi antrean suara offline saat online
+  useEffect(() => {
+    const syncOfflineVotes = async () => {
+      if (!isFirebaseConfigured || !db) return;
+      try {
+        const queueRaw = localStorage.getItem('pilketos_offline_votes');
+        if (!queueRaw) return;
+        const queue = JSON.parse(queueRaw);
+        if (!Array.isArray(queue) || queue.length === 0) return;
+
+        console.log(`[Sync] Menemukan ${queue.length} suara offline, mencoba sinkronisasi ke cloud...`);
+        const remaining = [];
+        for (const item of queue) {
+          try {
+            const studentRef = doc(db, 'students', item.studentId);
+            const candRef = doc(db, 'candidates', item.candidateId);
+
+            await updateDoc(studentRef, {
+              hasVoted: true,
+              votedAt: serverTimestamp()
+            }).catch(async () => {
+              await setDoc(studentRef, { hasVoted: true, votedAt: serverTimestamp() }, { merge: true });
+            });
+
+            await updateDoc(candRef, {
+              voteCount: increment(1)
+            }).catch(async () => {
+              await setDoc(candRef, { id: item.candidateId, voteCount: increment(1) }, { merge: true });
+            });
+          } catch (syncErr) {
+            remaining.push(item);
+          }
+        }
+
+        if (remaining.length === 0) {
+          localStorage.removeItem('pilketos_offline_votes');
+          console.log('[Sync] Seluruh suara offline berhasil disinkronkan ke cloud.');
+        } else {
+          localStorage.setItem('pilketos_offline_votes', JSON.stringify(remaining));
+        }
+      } catch (err) {
+        console.warn('Sync offline votes error:', err);
+      }
+    };
+
+    syncOfflineVotes();
+    window.addEventListener('online', syncOfflineVotes);
+    const interval = setInterval(syncOfflineVotes, 30000);
+    return () => {
+      window.removeEventListener('online', syncOfflineVotes);
+      clearInterval(interval);
+    };
+  }, []);
+
   // PENCATATAN SUARA (VOTING TRANSACTION)
   // Menjaga Asas Kerahasiaan Suara (Secret Ballot) & Asas Jujur Adil (Anti Double-Vote)
   const submitVote = async (studentId, candidateId) => {
     const timestamp = new Date().toISOString();
 
+    // 1. Verifikasi integritas pemilih di state lokal terlebih dahulu
+    const localStudent = students.find(s => s.id === studentId || s.nisn === studentId);
+    if (localStudent && localStudent.hasVoted) {
+      throw new Error(`Hak suara atas nama ${localStudent.name} sudah pernah digunakan.`);
+    }
+
+    const targetStudentId = localStudent ? localStudent.id : studentId;
+
+    // 2. Pencatatan ke Cloud Firestore (Multi-tier: Atomic Transaction -> Direct Write Fallback -> Offline Queue)
     if (isFirebaseConfigured && db) {
+      let cloudSucceeded = false;
+
+      // Percobaan 1: Menggunakan Atomic Transaction (Ideal jika kuota baca Firestore tersedia)
       try {
         await runTransaction(db, async (transaction) => {
-          const studentRef = doc(db, 'students', studentId);
+          const studentRef = doc(db, 'students', targetStudentId);
           const studentSnap = await transaction.get(studentRef);
 
-          if (!studentSnap.exists()) {
-            throw new Error('Data pemilih tidak ditemukan dalam DPT.');
-          }
-
-          if (studentSnap.data().hasVoted) {
+          if (studentSnap.exists() && studentSnap.data().hasVoted) {
             throw new Error('Hak suara atas pemilih ini sudah pernah digunakan.');
           }
 
@@ -224,40 +289,97 @@ export function ElectionProvider({ children }) {
             throw new Error('Pasangan calon tidak ditemukan.');
           }
 
-          // 1. Tandai pemilih telah memilih
           transaction.update(studentRef, {
             hasVoted: true,
             votedAt: serverTimestamp()
           });
 
-          // 2. Increment perolehan suara paslon secara atomic
           transaction.update(candRef, {
             voteCount: increment(1)
           });
         });
-      } catch (err) {
-        console.error('Error saat submitVote di Firebase:', err);
-        throw err;
+        cloudSucceeded = true;
+        console.log('[Firestore] Suara berhasil dicatat via Atomic Transaction.');
+      } catch (txErr) {
+        // Jika error bahwa hak suara memang sudah pernah dicoblos, hentikan proses
+        if (txErr.message && txErr.message.includes('sudah pernah digunakan')) {
+          throw txErr;
+        }
+
+        console.warn('runTransaction dialihkan ke fallback direct write (kuota baca harian habis/offline):', txErr.message);
+
+        // Percobaan 2: Fallback Direct Write (tetap berhasil meski kuota baca Firestore habis / RESOURCE_EXHAUSTED)
+        try {
+          const studentRef = doc(db, 'students', targetStudentId);
+          const candRef = doc(db, 'candidates', candidateId);
+
+          // Update data pemilih
+          try {
+            await updateDoc(studentRef, {
+              hasVoted: true,
+              votedAt: serverTimestamp()
+            });
+          } catch (updateStudentErr) {
+            const studentPayload = localStudent || { id: targetStudentId };
+            await setDoc(studentRef, {
+              ...studentPayload,
+              hasVoted: true,
+              votedAt: serverTimestamp()
+            }, { merge: true });
+          }
+
+          // Update perolehan suara paslon secara atomic
+          try {
+            await updateDoc(candRef, {
+              voteCount: increment(1)
+            });
+          } catch (updateCandErr) {
+            await setDoc(candRef, {
+              id: candidateId,
+              voteCount: increment(1)
+            }, { merge: true });
+          }
+
+          cloudSucceeded = true;
+          console.log('[Firestore] Suara berhasil dicatat via Fallback Direct Write.');
+        } catch (directErr) {
+          console.error('[Firestore] Direct write cloud juga gagal (koneksi offline):', directErr);
+          // Percobaan 3: Simpan ke antrean offline lokal agar suara pemilih TIDAK HILANG
+          try {
+            const offlineQueue = JSON.parse(localStorage.getItem('pilketos_offline_votes') || '[]');
+            offlineQueue.push({ studentId: targetStudentId, candidateId, timestamp });
+            localStorage.setItem('pilketos_offline_votes', JSON.stringify(offlineQueue));
+            console.warn('[Offline Mode] Suara berhasil diamankan di antrean offline lokal.');
+          } catch (queueErr) {
+            console.error('Gagal mencatat antrean offline:', queueErr);
+          }
+        }
       }
-      // CATATAN PENTING: Saat Firebase aktif, listener onSnapshot(candidates) & onSnapshot(students)
-      // secara otomatis memperbarui state di semua client secara real-time.
-      // Tidak melakukan penambahan manual di state lokal agar tidak terjadi lonjakan angka ganda sesaat.
-    } else {
-      // Update state lokal khusus mode offline tanpa Firebase
-      setStudents(prev => prev.map(s => {
-        if (s.id === studentId) {
+    }
+
+    // 3. SELALU perbarui State Lokal & LocalStorage
+    // Menjamin UI bilik suara segera menampilkan struk, quick count & DPT terupdate instan
+    setStudents(prev => {
+      const updated = prev.map(s => {
+        if (s.id === targetStudentId || s.id === studentId || (localStudent && s.nisn === localStudent.nisn)) {
           return { ...s, hasVoted: true, votedAt: timestamp };
         }
         return s;
-      }));
+      });
+      localStorage.setItem('pilketos_students_v2', JSON.stringify(updated));
+      return updated;
+    });
 
-      setCandidates(prev => prev.map(c => {
+    setCandidates(prev => {
+      const updated = prev.map(c => {
         if (c.id === candidateId) {
           return { ...c, voteCount: (c.voteCount || 0) + 1 };
         }
         return c;
-      }));
-    }
+      });
+      localStorage.setItem('pilketos_candidates_v2', JSON.stringify(updated));
+      return updated;
+    });
 
     addLog(`1 hak suara sah berhasil dicoblos di TPS.`, 'SUCCESS');
     return { success: true, timestamp };

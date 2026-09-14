@@ -18,11 +18,11 @@ export function VoterLogin({ onLoginSuccess }) {
     setErrorMsg('');
     setVotedInfo(null);
 
-    const cleanNisn = nisn.trim();
-    const cleanToken = token.trim().toUpperCase();
+    const cleanNisn = nisn.replace(/[\s\.\-]+/g, '');
+    const cleanToken = token.replace(/[\s\-]+/g, '').toUpperCase();
 
     if (!cleanNisn || !cleanToken) {
-      setErrorMsg('Mohon masukkan NISN dan Token Akses Anda.');
+      setErrorMsg('Mohon masukkan NISN/NIP dan Token Akses Anda.');
       return;
     }
 
@@ -37,9 +37,10 @@ export function VoterLogin({ onLoginSuccess }) {
       return;
     }
 
-    // Cari siswa berdasarkan NISN dan Token
+    // Cari pemilih (Siswa/Guru/Tendik) berdasarkan NISN/NIP dan Token (kebal terhadap spasi, titik, & tanda hubung)
     const student = students.find(
-      (s) => s.nisn === cleanNisn && s.token?.toUpperCase() === cleanToken
+      (s) => (s.nisn || '').replace(/[\s\.\-]+/g, '') === cleanNisn && 
+             (s.token || '').replace(/[\s\-]+/g, '').toUpperCase() === cleanToken
     );
 
     if (!student) {
@@ -57,9 +58,15 @@ export function VoterLogin({ onLoginSuccess }) {
       return;
     }
 
+    // Pastikan pemilih memiliki id yang valid
+    const voterPayload = {
+      ...student,
+      id: student.id || ('std-' + (student.nisn || Date.now()))
+    };
+
     // Login Sukses
-    loginVoter(student);
-    if (onLoginSuccess) onLoginSuccess(student);
+    loginVoter(voterPayload);
+    if (onLoginSuccess) onLoginSuccess(voterPayload);
   };
 
   return (

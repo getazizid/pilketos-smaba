@@ -61,24 +61,24 @@ export function parseDptCsv(csvText) {
         }
 
         students.push({
-          nisn: cols[0],
+          nisn: (cols[0] || '').replace(/\s+/g, ''),
           name: cols[1],
           voterType: cat,
           class: cols[3] || (cat === 'SISWA' ? 'X-1' : cat === 'GURU' ? 'Guru' : 'Tendik'),
           gender: cols[4] || 'L',
-          token: cols[5] || '',
+          token: (cols[5] || '').replace(/\s+/g, '').toUpperCase(),
           hasVoted: cols[6] === 'SUDAH' || cols[6] === 'true',
           votedAt: cols[7] || null
         });
       } else {
         // Format legacy (tanpa kolom kategori)
         students.push({
-          nisn: cols[0],
+          nisn: (cols[0] || '').replace(/\s+/g, ''),
           name: cols[1],
           voterType: 'SISWA',
           class: cols[2] || 'X-1',
           gender: cols[3] || 'L',
-          token: cols[4] || '',
+          token: (cols[4] || '').replace(/\s+/g, '').toUpperCase(),
           hasVoted: cols[5] === 'SUDAH' || cols[5] === 'true',
           votedAt: cols[6] || null
         });

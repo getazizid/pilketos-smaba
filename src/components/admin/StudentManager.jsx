@@ -197,10 +197,10 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
     const payload = {
       voterType: formData.voterType || 'SISWA',
       name: formData.name.trim(),
-      nisn: formData.nisn.trim(),
+      nisn: formData.nisn.replace(/\s+/g, ''),
       class: formData.class.trim(),
       gender: formData.gender,
-      token: formData.token.trim().toUpperCase() || generateVoterToken()
+      token: formData.token.replace(/\s+/g, '').toUpperCase() || generateVoterToken()
     };
 
     if (editingStudent) {
@@ -264,8 +264,9 @@ export function StudentManager({ onNavigateToPrint, onAddToast }) {
       if (parsed && parsed.length > 0) {
         const withTokens = parsed.map(s => ({
           ...s,
-          voterType: s.voterType || 'SISWA',
-          token: s.token || generateVoterToken()
+          nisn: (s.nisn || '').replace(/\s+/g, ''),
+          token: (s.token ? s.token.replace(/\s+/g, '').toUpperCase() : generateVoterToken()),
+          voterType: s.voterType || 'SISWA'
         }));
         await addBulkStudents(withTokens);
         if (onAddToast) onAddToast(`Berhasil mengimpor ${withTokens.length} data pemilih DPT dari file Excel.`, 'success');
