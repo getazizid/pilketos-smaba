@@ -13,7 +13,8 @@ import {
   CheckCircle2, 
   User,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  Lock
 } from 'lucide-react';
 
 export function Navbar({ currentView, setCurrentView, onOpenHelp }) {
@@ -108,10 +109,14 @@ export function Navbar({ currentView, setCurrentView, onOpenHelp }) {
               type="button"
               className={`btn btn-sm ${currentView === 'projector' ? 'btn-gold' : 'btn-outline'}`}
               onClick={() => handleNavigate('projector')}
-              title="Tampilkan Layar Monitoring Quick Count"
+              title="Layar Monitoring Terproteksi PIN (Khusus Panitia / Saksi)"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
             >
               <Tv size={15} />
               <span>Layar Monitoring</span>
+              {settings.requireMonitoringCode !== false && (
+                <Lock size={12} style={{ opacity: 0.65, marginLeft: '2px' }} />
+              )}
             </button>
 
             {/* Bantuan / Tata Cara */}
@@ -274,7 +279,14 @@ export function Navbar({ currentView, setCurrentView, onOpenHelp }) {
                   onClick={() => handleNavigate('projector')}
                 >
                   <Tv size={18} color="var(--gold)" />
-                  <span style={{ flex: 1 }}>Layar Monitoring (Quick Count)</span>
+                  <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span>Layar Monitoring</span>
+                    {settings.requireMonitoringCode !== false && (
+                      <span className="badge badge-gold" style={{ fontSize: '0.65rem', padding: '1px 6px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                        <Lock size={9} /> Terkunci
+                      </span>
+                    )}
+                  </span>
                   <ChevronRight size={16} color="var(--text-muted)" />
                 </div>
 

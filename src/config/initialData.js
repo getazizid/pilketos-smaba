@@ -104,7 +104,10 @@ export const INITIAL_SETTINGS = {
   tpsCode: 'TPS SMAN 1 Batu',
   requireTpsCode: true,
   tpsSecurityCode: 'SMABA-TPS-2026',
-  blockMobile: true
+  blockMobile: true,
+  requireMonitoringCode: true,
+  monitoringSecurityCode: 'SMABA-MONITOR-2026',
+  monitoringLockedAt: null
 };
 
 export const INITIAL_USERS = [

@@ -10,11 +10,12 @@ import {
   Lock, 
   KeyRound, 
   Smartphone, 
-  ShieldCheck 
+  ShieldCheck,
+  Tv
 } from 'lucide-react';
 
 export function ElectionSettings({ onAddToast }) {
-  const { settings, updateSettings, resetAllVotes } = useElection();
+  const { settings, updateSettings, lockAllMonitoringScreens, resetAllVotes } = useElection();
   const { userRole } = useAuth();
 
   const isSuperAdmin = userRole === 'ADMIN';
@@ -22,11 +23,13 @@ export function ElectionSettings({ onAddToast }) {
   // General Settings Form
   const [generalForm, setGeneralForm] = useState({ ...settings });
 
-  // Security Settings Form (TPS Authorization & Mobile Blocking)
+  // Security Settings Form (TPS Authorization, Mobile Blocking & Monitoring Gate)
   const [securityForm, setSecurityForm] = useState({
     requireTpsCode: settings.requireTpsCode ?? true,
     tpsSecurityCode: settings.tpsSecurityCode || 'SMABA-TPS-2026',
-    blockMobile: settings.blockMobile ?? true
+    blockMobile: settings.blockMobile ?? true,
+    requireMonitoringCode: settings.requireMonitoringCode ?? true,
+    monitoringSecurityCode: settings.monitoringSecurityCode || 'SMABA-MONITOR-2026'
   });
 
   const [resetConfirmText, setResetConfirmText] = useState('');
@@ -37,7 +40,9 @@ export function ElectionSettings({ onAddToast }) {
     setSecurityForm({
       requireTpsCode: settings.requireTpsCode ?? true,
       tpsSecurityCode: settings.tpsSecurityCode || 'SMABA-TPS-2026',
-      blockMobile: settings.blockMobile ?? true
+      blockMobile: settings.blockMobile ?? true,
+      requireMonitoringCode: settings.requireMonitoringCode ?? true,
+      monitoringSecurityCode: settings.monitoringSecurityCode || 'SMABA-MONITOR-2026'
     });
   }, [settings]);
 
@@ -54,9 +59,19 @@ export function ElectionSettings({ onAddToast }) {
     updateSettings({
       requireTpsCode: securityForm.requireTpsCode,
       tpsSecurityCode: securityForm.tpsSecurityCode.trim().toUpperCase(),
-      blockMobile: securityForm.blockMobile
+      blockMobile: securityForm.blockMobile,
+      requireMonitoringCode: securityForm.requireMonitoringCode,
+      monitoringSecurityCode: securityForm.monitoringSecurityCode.trim().toUpperCase()
     });
-    if (onAddToast) onAddToast('Pengaturan keamanan TPS & pembatasan perangkat berhasil disimpan.', 'success');
+    if (onAddToast) onAddToast('Pengaturan keamanan TPS & Layar Monitoring berhasil disimpan.', 'success');
+  };
+
+  const handleRemoteLockMonitoring = async () => {
+    if (!isSuperAdmin) return;
+    if (window.confirm('Kunci seluruh Layar Monitoring sekarang? Seluruh perangkat proyektor dan layar pemantau yang sedang terbuka akan langsung terkunci secara serentak demi menjaga kerahasiaan suara.')) {
+      await lockAllMonitoringScreens();
+      if (onAddToast) onAddToast('Seluruh Layar Monitoring berhasil dikunci paksa secara real-time!', 'warning');
+    }
   };
 
   const handleResetVotes = () => {
@@ -265,13 +280,129 @@ export function ElectionSettings({ onAddToast }) {
               </span>
             </div>
           </div>
+
+          {/* Bagian Keamanan Khusus Layar Monitoring Quick Count */}
+          <div style={{
+            marginTop: '1.5rem',
+            paddingTop: '1.5rem',
+            borderTop: '2px dashed #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+              <Tv size={20} color="#b45309" />
+              <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                Proteksi Akses Layar Monitoring (Quick Count)
+              </h4>
+              <span className="badge badge-gold" style={{ fontSize: '0.72rem' }}>Penting untuk Integritas</span>
+            </div>
+
+            {/* Checkbox: Wajibkan Kode Akses Layar Monitoring */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 'var(--radius-md)',
+              padding: '1.2rem',
+              marginBottom: '1rem'
+            }}>
+              <input
+                type="checkbox"
+                id="require-monitoring-code"
+                checked={securityForm.requireMonitoringCode}
+                onChange={(e) => setSecurityForm({ ...securityForm, requireMonitoringCode: e.target.checked })}
+                disabled={!isSuperAdmin}
+                style={{ width: '20px', height: '20px', marginTop: '3px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+              />
+              <label htmlFor="require-monitoring-code" style={{ cursor: 'pointer', flex: 1 }}>
+                <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.95rem' }}>
+                  Wajibkan Kode Akses untuk Membuka Layar Monitoring (Rekomendasi Aktif)
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem', lineHeight: '1.5' }}>
+                  Mencegah pemilih atau publik melihat perolehan suara sementara di HP/komputer pribadi, 
+                  sehingga tidak terjadi penggiringan opini atau mempengaruhi pilihan siswa sebelum pemungutan suara selesai.
+                </div>
+              </label>
+            </div>
+
+            {/* Input: Kode Akses Monitoring */}
+            <div style={{
+              background: '#fefce8',
+              border: '1px solid #fde047',
+              borderRadius: 'var(--radius-md)',
+              padding: '1.2rem',
+              marginBottom: '1rem'
+            }}>
+              <label className="form-label" style={{ color: '#854d0e', fontWeight: '700' }}>
+                Kode Akses Layar Monitoring Resmi (PIN Rahasia)
+              </label>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{
+                    maxWidth: '300px',
+                    fontWeight: '700',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: '#0f172a',
+                    background: '#ffffff'
+                  }}
+                  value={securityForm.monitoringSecurityCode}
+                  onChange={(e) => setSecurityForm({ ...securityForm, monitoringSecurityCode: e.target.value })}
+                  disabled={!isSuperAdmin || !securityForm.requireMonitoringCode}
+                  placeholder="Misal: SMABA-MONITOR-2026"
+                  required={securityForm.requireMonitoringCode}
+                />
+                <span style={{ fontSize: '0.82rem', color: '#854d0e', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <KeyRound size={14} color="#854d0e" />
+                  <span>Berikan kode ini <strong>khusus kepada Petugas Operator Proyektor atau Saksi Resmi</strong>.</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Tombol Kunci Darurat Layar Monitoring (Remote Lock Real-Time) */}
+            <div style={{
+              background: '#fff1f2',
+              border: '1px solid #fecdd3',
+              borderRadius: 'var(--radius-md)',
+              padding: '1rem 1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div>
+                <div style={{ fontWeight: '700', color: '#9f1239', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Lock size={15} />
+                  <span>Penguncian Paksa Seluruh Layar Monitoring (Remote Lock)</span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#be123c', marginTop: '0.2rem' }}>
+                  Kunci seketika seluruh layar proyektor &amp; perangkat yang saat ini sedang membuka monitoring suara secara serentak.
+                </div>
+              </div>
+
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={handleRemoteLockMonitoring}
+                  title="Kunci paksa seluruh layar monitoring yang terbuka"
+                >
+                  <Lock size={14} />
+                  <span>Kunci Semua Layar Monitoring Sekarang</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {isSuperAdmin && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
             <button type="submit" className="btn btn-primary">
               <ShieldCheck size={18} />
-              <span>Simpan Pengaturan Keamanan TPS</span>
+              <span>Simpan Pengaturan Keamanan &amp; Akses</span>
             </button>
           </div>
         )}

@@ -1,11 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { useElection } from '../../context/ElectionContext';
-import { Maximize, Minimize, ArrowLeft, Trophy, Users, Vote, Percent, Clock, Radio } from 'lucide-react';
+import { 
+  Maximize, 
+  Minimize, 
+  ArrowLeft, 
+  Trophy, 
+  Users, 
+  Vote, 
+  Percent, 
+  Clock, 
+  Radio,
+  Lock,
+  KeyRound,
+  ShieldAlert,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  AlertTriangle
+} from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
 
 export function QuickCountDisplay({ onBack }) {
   const { candidates, totalDpt, totalVotes, participationPercentage, totalUnvoted, settings, dptBreakdown, votedBreakdown, unvotedBreakdown } = useElection();
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Security / Authorization State
+  const [isAuthorized, setIsAuthorized] = useState(() => {
+    try {
+      if (settings.requireMonitoringCode === false) return true;
+      const authTime = Number(sessionStorage.getItem('pilketos_monitoring_auth_time') || 0);
+      if (!authTime) return false;
+      if (settings.monitoringLockedAt && authTime <= Number(settings.monitoringLockedAt)) {
+        sessionStorage.removeItem('pilketos_monitoring_auth_time');
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  const [inputCode, setInputCode] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorCode, setErrorCode] = useState('');
+
+  // Remote lock listener: jika settings.monitoringLockedAt diperbarui oleh admin, kunci layar seketika
+  useEffect(() => {
+    if (settings.requireMonitoringCode !== false && settings.monitoringLockedAt) {
+      const authTime = Number(sessionStorage.getItem('pilketos_monitoring_auth_time') || 0);
+      if (authTime && authTime <= Number(settings.monitoringLockedAt)) {
+        setIsAuthorized(false);
+        sessionStorage.removeItem('pilketos_monitoring_auth_time');
+        setErrorCode('Layar Monitoring telah dikunci kembali oleh Panitia / Super Admin demi menjaga kerahasiaan suara.');
+      }
+    }
+  }, [settings.monitoringLockedAt, settings.requireMonitoringCode]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -22,6 +71,253 @@ export function QuickCountDisplay({ onBack }) {
     document.addEventListener('fullscreenchange', handleFsChange);
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
+
+  // Handle verifikasi kode akses monitoring
+  const handleVerifyCode = (e) => {
+    e.preventDefault();
+    setErrorCode('');
+    const cleanInput = inputCode.trim().toUpperCase();
+    const expectedCode = (settings.monitoringSecurityCode || 'SMABA-MONITOR-2026').trim().toUpperCase();
+
+    if (cleanInput === expectedCode) {
+      const now = Date.now();
+      try {
+        sessionStorage.setItem('pilketos_monitoring_auth_time', now.toString());
+      } catch (err) {
+        console.warn('SessionStorage warning:', err);
+      }
+      setIsAuthorized(true);
+      setInputCode('');
+    } else {
+      setErrorCode('Kode Akses Layar Monitoring salah! Silakan periksa kembali kode resmi dari Panitia.');
+    }
+  };
+
+  // Handle kunci kembali secara manual oleh operator
+  const handleLockScreen = () => {
+    if (window.confirm('Kunci kembali Layar Monitoring ini? Hasil suara sementara akan ditutup dan memerlukan kode akses kembali.')) {
+      setIsAuthorized(false);
+      try {
+        sessionStorage.removeItem('pilketos_monitoring_auth_time');
+      } catch (err) {
+        console.warn('SessionStorage warning:', err);
+      }
+    }
+  };
+
+  // JIKA BELUM TEROTORISASI: Tampilkan Layar Kunci Keamanan (Gate)
+  if (!isAuthorized) {
+    return (
+      <div className="projector-view" style={{
+        minHeight: '100vh',
+        background: '#f8fafc',
+        color: '#0f172a',
+        padding: 'clamp(1rem, 2.5vw, 2.5rem)',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Top Header dengan tombol kembali */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          paddingBottom: '1.25rem',
+          borderBottom: '2px solid #e2e8f0',
+          marginBottom: '2rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <img
+              src={settings.schoolLogo || '/assets/logo.png'}
+              alt="Logo SMAN 1 Batu"
+              style={{
+                width: '48px',
+                height: '48px',
+                objectFit: 'contain'
+              }}
+              onError={(e) => { e.target.src = '/assets/logo.png'; }}
+            />
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#b45309', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                SISTEM E-VOTING PILKETOS SMABA 2026
+              </div>
+              <h1 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#0f172a', margin: 0 }}>
+                Layar Monitoring Quick Count
+              </h1>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={onBack}
+            title="Kembali ke Beranda Bilik Suara"
+          >
+            <ArrowLeft size={15} />
+            <span>Kembali ke Beranda</span>
+          </button>
+        </div>
+
+        {/* Kotak Gate Penguncian Keamanan */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem 0'
+        }}>
+          <div className="glass-panel" style={{
+            maxWidth: '520px',
+            width: '100%',
+            padding: 'clamp(1.75rem, 4vw, 3rem)',
+            background: '#ffffff',
+            borderRadius: 'var(--radius-xl)',
+            border: '1.5px solid #cbd5e1',
+            boxShadow: '0 20px 45px rgba(15, 23, 42, 0.1)',
+            textAlign: 'center'
+          }}>
+            {/* Ikon Gembok Keamanan */}
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              background: '#fef2f2',
+              border: '2px solid #ef4444',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1.25rem',
+              color: '#dc2626',
+              boxShadow: '0 8px 20px rgba(220, 38, 38, 0.15)'
+            }}>
+              <Lock size={38} />
+            </div>
+
+            {/* Badge Peringatan */}
+            <div>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.35rem 0.95rem',
+                borderRadius: 'var(--radius-pill)',
+                background: '#fef2f2',
+                color: '#b91c1c',
+                fontSize: '0.78rem',
+                fontWeight: '800',
+                letterSpacing: '0.05em',
+                marginBottom: '1rem',
+                border: '1px solid #fecaca'
+              }}>
+                <ShieldAlert size={15} />
+                <span>AKSES LAYAR MONITORING DIBATASI</span>
+              </span>
+            </div>
+
+            <h2 style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.75rem)', fontWeight: '800', color: '#0f172a', marginBottom: '0.75rem', lineHeight: '1.3' }}>
+              Layar Terkunci Demi Integritas Suara
+            </h2>
+
+            <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '1.75rem' }}>
+              Untuk menjunjung asas <strong>LUBER JURDIL</strong> dan mencegah penggiringan suara pemilih yang belum menggunakan hak pilih, 
+              penghitungan suara real-time (Quick Count) hanya dapat dibuka oleh Panitia dengan <strong>Kode Akses Resmi</strong>.
+            </p>
+
+            {errorCode && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.9rem 1.1rem',
+                marginBottom: '1.5rem',
+                color: '#dc2626',
+                fontSize: '0.85rem',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem'
+              }}>
+                <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+                <span>{errorCode}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyCode} style={{ textAlign: 'left' }}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="form-label" htmlFor="monitoring-security-code" style={{ fontWeight: '700', color: '#1e293b' }}>
+                  Kode Akses Monitoring (PIN Rahasia)
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>
+                    <KeyRound size={18} />
+                  </span>
+                  <input
+                    id="monitoring-security-code"
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-input"
+                    style={{
+                      paddingLeft: '2.8rem',
+                      paddingRight: '3rem',
+                      letterSpacing: showPassword ? '0.08em' : '0.2em',
+                      fontWeight: '700',
+                      color: '#0f172a'
+                    }}
+                    placeholder="Ketik Kode Akses Monitoring"
+                    value={inputCode}
+                    onChange={(e) => setInputCode(e.target.value)}
+                    autoComplete="off"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '0.85rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      padding: '4px'
+                    }}
+                    title={showPassword ? 'Sembunyikan' : 'Tampilkan'}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-gold btn-lg"
+                style={{ width: '100%', marginBottom: '0.75rem', justifyContent: 'center' }}
+              >
+                <ShieldCheck size={20} />
+                <span>Buka Layar Monitoring</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={onBack}
+              >
+                <ArrowLeft size={16} />
+                <span>Kembali ke Bilik Suara</span>
+              </button>
+            </form>
+
+            <div style={{ marginTop: '1.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              PILKETOS SMABA 2026 &bull; Kode otorisasi resmi diterbitkan oleh Koordinator TPS / Super Admin.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const sortedCandidates = [...candidates].sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
   const leadingCandidateId = sortedCandidates[0]?.voteCount > 0 ? sortedCandidates[0]?.id : null;
@@ -57,6 +353,7 @@ export function QuickCountDisplay({ onBack }) {
               objectFit: 'contain',
               filter: 'drop-shadow(0 3px 8px rgba(0, 0, 0, 0.12))'
             }}
+            onError={(e) => { e.target.src = '/assets/logo.png'; }}
           />
           <div>
             <div style={{
@@ -88,6 +385,22 @@ export function QuickCountDisplay({ onBack }) {
           <div className="badge badge-green" style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}>
             <span className="status-dot"></span> LIVE MONITORING
           </div>
+
+          <div className="badge badge-purple" style={{ fontSize: '0.78rem', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <ShieldCheck size={14} />
+            <span>TEROTORISASI</span>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={handleLockScreen}
+            style={{ borderColor: '#fca5a5', color: '#b91c1c', background: '#fff5f5' }}
+            title="Kunci kembali layar monitoring ini agar tertutup dari publik"
+          >
+            <Lock size={14} />
+            <span>Kunci Layar</span>
+          </button>
 
           <button
             type="button"

@@ -150,7 +150,8 @@ export function ElectionProvider({ children }) {
       try {
         const isTps = sessionStorage.getItem('pilketos_tps_authorized') === 'true';
         const isAdmin = Boolean(sessionStorage.getItem('pilketos_admin_user'));
-        return isTps || isAdmin;
+        const isMonitoring = Boolean(sessionStorage.getItem('pilketos_monitoring_auth_time'));
+        return isTps || isAdmin || isMonitoring;
       } catch {
         return false;
       }
@@ -607,6 +608,13 @@ export function ElectionProvider({ children }) {
     addLog(`Pengaturan pemilihan diperbarui (Status: ${merged.status}).`, 'INFO');
   };
 
+  // Kunci Paksa Seluruh Layar Monitoring (Remote Lock Real-time)
+  const lockAllMonitoringScreens = async () => {
+    const lockTime = Date.now();
+    await updateSettings({ monitoringLockedAt: lockTime });
+    addLog('Seluruh Layar Monitoring Quick Count dikunci paksa oleh Admin.', 'WARNING');
+  };
+
   // Reset Semua Suara (Darurat/Simulasi Baru)
   const resetAllVotes = async () => {
     if (isFirebaseConfigured && db) {
@@ -806,6 +814,7 @@ export function ElectionProvider({ children }) {
         deleteAllStudents,
         resetStudentVote,
         updateSettings,
+        lockAllMonitoringScreens,
         resetAllVotes,
         addUser,
         updateUser,
