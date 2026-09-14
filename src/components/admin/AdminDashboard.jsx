@@ -559,17 +559,15 @@ export function AdminDashboard({ onNavigate, onAddToast }) {
               </div>
             </div>
 
-            {/* List Masing-Masing Kelas (Scrollable) */}
+            {/* List Masing-Masing Kelas (Tanpa Scroll - Siap Screenshot) */}
             <div style={{
-              maxHeight: '340px',
-              overflowY: 'auto',
-              paddingRight: '0.35rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.85rem'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: '0.65rem'
             }}>
               {filteredClassStats.length === 0 ? (
                 <div style={{
+                  gridColumn: '1 / -1',
                   textAlign: 'center',
                   padding: '2rem 1rem',
                   color: 'var(--text-muted)',
@@ -665,7 +663,7 @@ export function AdminDashboard({ onNavigate, onAddToast }) {
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>{c.voted}</strong> / {c.total} pemilih
+                            <strong style={{ color: 'var(--text-primary)' }}>{c.voted}</strong>/{c.total}
                           </span>
                           <span style={{
                             fontWeight: '700',
